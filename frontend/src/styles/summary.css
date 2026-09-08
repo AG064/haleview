@@ -1,0 +1,128 @@
+.summary-panel {
+  position: sticky;
+  top: 18px;
+}
+
+.score-card {
+  margin: 24px 0 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.score-gauge {
+  position: relative;
+  display: grid;
+  width: 116px;
+  height: 116px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.score-gauge canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.score-gauge-centre {
+  position: relative;
+  display: grid;
+  width: 84px;
+  height: 84px;
+  place-content: center;
+  border-radius: 50%;
+  background: var(--panel);
+  text-align: center;
+}
+
+.score-gauge strong {
+  display: block;
+  color: var(--accent-dark);
+  font-size: 2.2rem;
+  line-height: 0.95;
+  letter-spacing: normal;
+}
+
+.score-caption {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.score-caption > span:last-child {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.score-scale {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.73rem;
+}
+
+.metric-list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.metric-row {
+  gap: 12px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.metric-row strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.metric-label,
+.metric-detail {
+  display: block;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.metric-detail {
+  margin-top: 3px;
+  font-size: 0.72rem;
+}
+
+.summary-note {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  color: var(--muted);
+}
+
+.summary-note p {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.note-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.updated-at {
+  margin: 20px 0 0;
+  font-size: 0.7rem;
+}
