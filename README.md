@@ -128,6 +128,14 @@ a basic moderation check before it contributes to community results. Saved
 nutrition settings keep a short change history. Frequent choices from that
 history also affect later recipe retrieval.
 
+## Community feedback
+
+Signed-in users can leave one-to-five-star ratings and review text. Each account has one current vote per recipe. Approved community ratings increase retrieval priority, while personal likes and dislikes also influence the query and ranking used by vector search. The hash-vector encoding is fixed; feedback changes retrieval and its stored ranking signals, rather than retraining an embedding model.
+
+A recipe receives the community-verified label after at least three ratings, an average of at least four stars, and a helpful ratio of at least two thirds. That status adds a retrieval boost and is shown on recipe cards and details. It does not mean the recipe was kitchen-tested.
+
+Moderation is automated: contact details are rejected, and control characters or repeated-character spam receive a stored rejected status and reason. Only approved feedback contributes to community ranking or verification. There is no human moderation console.
+
 ## Guest visits
 
 Guest mode keeps profile, privacy choices and activity only in page memory. Reloading or leaving the visit clears them. Previous guest snapshots are removed when starting a guest visit. Guest values are not copied into account setup. Online AI, email notifications and public sharing require an account. Guest computation endpoints return results without storing account records.

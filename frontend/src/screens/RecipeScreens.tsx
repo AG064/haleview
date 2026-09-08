@@ -336,7 +336,7 @@ export function RecipeScreen({ request, signedIn }: { request: SessionRequest; s
     setFeedbackMessage(null);
     setError(null);
     try {
-      await request((token) => saveNutritionFeedback({
+      const feedback = await request((token) => saveNutritionFeedback({
         subjectType: "recipe",
         subjectId: selected.recipe.id,
         rating,
@@ -344,7 +344,9 @@ export function RecipeScreen({ request, signedIn }: { request: SessionRequest; s
         stars,
         comment: feedbackComment.trim() || undefined,
       }, token));
-      setFeedbackMessage("Rating saved. It will improve later recipe results.");
+      setFeedbackMessage(feedback.moderationStatus === "approved"
+        ? "Rating saved. It will improve later recipe results."
+        : `Review rejected: ${feedback.moderationReason} It will not affect community ratings or recommendations.`);
     } catch (feedbackError: unknown) {
       setError(feedbackError instanceof ApiError ? feedbackError.message : "Feedback could not be saved.");
     } finally {
