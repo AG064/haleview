@@ -14,7 +14,7 @@ The landing-page lifestyle photo is by [olia danilevich on Pexels](https://www.p
 
 The catalogue includes 522 public-domain records from the Open Recipe Archive and 20 original Haleview everyday meal templates. The templates are labelled separately and have not been kitchen-tested. Their ingredient amounts are explicit and nutrition is calculated from USDA records. Automatic plans use the meal-ready templates; the historical archive remains available for browsing. Recipes with uncertain consumption quantities, such as preserving brine, are excluded from planning and display a warning.
 
-Ingredient nutrition data comes from USDA FoodData Central Foundation Foods and SR Legacy records. Haleview calculates recipe nutrition from the stored gram and millilitre quantities.
+Ingredient nutrition data comes from USDA FoodData Central Foundation Foods and SR Legacy records. Haleview calculates recipe nutrition from the stored gram and millilitre quantities. Olive oil is currently weighed in grams because its source record is mass-based. No unsourced density conversion is applied; this is an exception to the usual millilitre convention for liquids.
 
 The source archive does not give a reliable serving or yield value. Haleview stores each imported recipe as one recipe unit. It does not divide nutrition by a guessed serving count.
 
@@ -78,7 +78,7 @@ Haleview uses selected icons from [Lucide](https://lucide.dev). The React packag
 
 Sign in to save a daily or seven-day plan. Haleview uses the saved health
 profile and nutrition preferences. Each plan shows meal type, time, recipe,
-servings, and calculated nutrition.
+servings, and calculated nutrition. Each meal and day also shows its backend-calculated share of the saved daily calorie and macronutrient targets.
 
 Meals can be swapped, moved to another day, changed to another meal type,
 regenerated, or entered manually. Each saved change creates a plan version.
@@ -100,7 +100,7 @@ same input gives the same result. The frontend only displays these values.
 The detailed view compares 7-day and 30-day daily calorie averages with the
 saved target. Days without records count as zero in these averages.
 The progress page has a colour-coded calorie progress bar and a macro chart.
-It also compares seven micronutrients with general adult Daily Values. Sodium
+It also compares six micronutrients and fibre with general adult Daily Values. Sodium
 uses an upper limit. Other tracked nutrients use a daily reference. These
 values are for display and do not diagnose a health condition. The reference
 values come from the [FDA Daily Value guide](https://www.fda.gov/food/nutrition-facts-label/daily-value-nutrition-and-supplement-facts-labels).
@@ -137,7 +137,7 @@ Guest mode keeps profile, privacy choices and activity only in page memory. Relo
 1. Create an account or sign in.
 2. Complete Profile. Confirm Data use on the final step to save the profile.
 3. Open Nutrition and confirm the pre-filled food preferences and targets.
-4. Open Recipes to search the public-domain catalogue. The browser groups versions with the same base recipe name, ignoring trailing version numbers and parenthetical subtitles. View variations opens every matching version in a group. Counts show recipes and groups. Show more recipe groups loads the next 24 groups while preserving your filters, so the full catalogue stays accessible. Change the recipe amount to recalculate ingredient quantities and nutrition.
+4. Open Recipes to search the public-domain catalogue. The browser groups versions with the same base recipe name, ignoring trailing version numbers and parenthetical subtitles. View variations opens every matching version in a group. Counts show recipes and groups. Use the numbered pages or Previous and Next to move through groups while preserving your filters. Change the recipe amount to recalculate ingredient quantities and nutrition.
 5. Use Create a recipe variation to retrieve a matching source recipe and make a grounded variation. Open a recipe and use Find swap to replace one ingredient with a safe catalogue alternative.
 6. Rate a source recipe. Later searches use approved community ratings, personal feedback, and preference history.
 7. Open Meal plan to create a day or week. Change meals, move them, add a manual meal, or restore an earlier plan version.
@@ -193,6 +193,8 @@ Recipe variations and ingredient substitutions have separate prompts and output 
 
 Create first uses DeepSeek to match explicitly requested foods to available catalogue ingredients. It then composes the recipe and separately critiques the result. The critique checks the request, ingredients and cooking method; one revision is allowed. The three Create prompts specify their output schemas. Source recipes and ingredient records provide context instead of a fixed example dish that could steer unrelated requests. Backend validation checks catalogue identifiers, units, quantities, restrictions, ingredient references and known food names in recipe text. The model cannot supply authoritative nutrition. Preparation avoids fixed ingredient amounts so serving changes remain consistent. These checks reduce errors but cannot prove culinary quality or the safety of every generated instruction.
 
+The configured DeepSeek model handles both recipe composition and nutritional analysis. Using one provider keeps authentication, response validation, and recovery consistent. Recipe composition uses temperature 0.65 to allow different dishes, while nutritional analysis uses 0.2 to prioritize suggestions from calculated facts. The model is configured with DEEPSEEK_MODEL; the default is deepseek-v4-flash.
+
 DeepSeek is used for structured assessment, selection, substitution ranking, and guidance. It supports the JSON output and function calls used by this application. The local catalogue remains the recipe and ingredient source. Provider output cannot add unknown recipe or ingredient identifiers. Backend functions remain the only source for displayed nutrition values and target comparisons.
 
 Hale shows nutrition insights beside health guidance. The optional online nutrition review selects practical suggestions from the calculated local review. It cannot replace calorie comparisons or introduce unverified foods. This action respects the account's consent and Online AI setting.
@@ -213,11 +215,12 @@ The backend handles timeouts, rate limits, connection errors, rejected requests,
 
 - Access: account access and guest access.
 - Profile: health data, goals, activity, and food preferences.
-- Dashboard: current health information and Hale guidance.
+- Dashboard: today's health, meal, and activity summary.
+- Hale: health guidance and optional AI nutrition review, accessible from the main navigation.
 - Records: weight and activity records.
 - Progress: health changes over time.
 - Nutrition: intake, current targets, trends, micronutrients, and feedback.
-- Recipes: public-domain archive search, filters, grounded variations, safe ingredient substitutions, community ratings, recipe details, recipe amount changes, source links, and calculated nutrition values.
+- Recipes: catalogue search, filters, generated creations, My saved recipes, Favourites, ingredient substitutions, community ratings, recipe details, serving changes, source links, and calculated nutrition values.
 - Meal plan: daily or seven-day plans, meal changes, manual meals, and version restore.
 - Shopping list: grouped ingredients with saved quantity changes and removals.
 
@@ -235,6 +238,8 @@ The data model uses these units:
 Dates and times use ISO 8601. The user timezone is saved with nutrition settings.
 New plans retain that timezone and each meal's ISO scheduled instant alongside its local date and time. Account activity entries use the saved timezone rather than the browser timezone. Nonexistent daylight-saving times are rejected; repeated times use the earlier occurrence. Older saved plans remain readable, and an old nonexistent local time is marked for correction.
 
+Recipe and ingredient text use deterministic 48-dimensional hash vectors. Recipe ranking combines cosine similarity with text matches and permitted personalization signals. Ingredient ranking also uses cosine similarity, with exact-name and word-match priority. At least one text match is required so vector collisions alone cannot turn an unavailable ingredient into a result.
+
 ## Data model
 
 Recipe records contain `id`, `title`, `cuisine`, `meal`, `servings`, `ingredients`, `summary`, `time`, `difficulty_level`, `dietary_tags`, `source`, `img`, optional `imageCredit`, and `preparation`. Every recipe ingredient contains `id`, `name`, `quantity`, and `unit`. Every preparation step contains `step`, `description`, and `ingredients`.
@@ -250,7 +255,7 @@ Community records contain a recipe subject, one to five stars, helpful state, de
 
 ## Bonus functions
 
-- Micronutrients include fibre, sodium, vitamin D, vitamin B12, iron, calcium, and magnesium.
+- Tracked micronutrients are sodium, vitamin D, vitamin B12, iron, calcium, and magnesium. Fibre is tracked alongside them.
 - Micronutrient progress has reference bars, low-intake guidance, safe recipe suggestions, and recipe search filters.
 - Community RAG uses ratings, reviews, moderation state, verified labels, preference history, and personal feedback in retrieval ranking.
 - Recipe results include calculated nutrient density, satiety, and ingredient diversity. Meal plans include calculated balance, diversity, micronutrient coverage, and trend fields. These fields use catalogue nutrition. They do not make glycaemic, antioxidant, or environmental claims.
@@ -268,10 +273,31 @@ Community records contain a recipe subject, one to five stars, helpful state, de
 
 ## Development checks
 
-Run the checks inside the matching folder after a code change:
+The default Docker build runs lint, tests, and compilation before creating the runtime images:
 
 ```text
+docker compose up --build
+```
+
+To run only the checks without starting the application:
+
+```text
+docker build --target build -t haleview-backend-check ./backend
+docker build --target build -t haleview-frontend-check ./frontend
+```
+
+For local development, use Node.js 22.13 or newer. In each of `backend` and `frontend`, run:
+
+```text
+npm ci
 npm run lint
+npm test
 npm run check
 npm run build
 ```
+
+The backend build copies the catalogue into its output directory. Tests use temporary databases and mocked provider responses; they do not need an API key, external account, or a running application. Temporary test data is removed after each test process.
+
+Backend tests cover catalogue contracts, ingredient and recipe retrieval, preference reuse, nutrition function validation, daily and weekly plans, changes and restore, shopping lists, cooking-state validation, authentication boundaries, intake ownership, provider timeouts and errors, and cache recovery. Frontend tests cover pending and failed loads, the Hale navigation entry, guest AI controls, escaped error messages, ISO dates, and the Combine icon. These tests complement manual browser checks; they do not prove that every generated cooking instruction is correct.
+
+GitHub Actions runs the same Docker checks for main-branch changes and pull requests, using read-only repository permissions and no provider credentials.

@@ -204,6 +204,8 @@ function validateRecipes(value: unknown, ingredientsById: Map<string, Ingredient
 const rawIngredients = readJson(new URL("./data/ingredients.json", import.meta.url));
 const ingredients = validateIngredients(rawIngredients);
 const ingredientMap = new Map(ingredients.map((ingredient) => [ingredient.id, ingredient]));
+const ingredientEmbeddings = new Map(ingredients.map(ingredient => [ingredient.id,
+  embedText([ingredient.label, ...ingredient.aliases, ingredient.category].join(" "))]));
 const rawRecipes = readJson(new URL("./data/recipes.json", import.meta.url));
 const recipes = validateRecipes(rawRecipes, ingredientMap).map(recipe => ({ ...recipe, planningWarning: recipePlanningWarning(recipe) }));
 const recipeMap = new Map(recipes.map((recipe) => [recipe.id, recipe]));
@@ -293,11 +295,21 @@ export function getRecipeEnhancedNutrition(recipe: RecipeRecord, nutrition: Nutr
 
 export function searchIngredients(query = "", limit = 20): IngredientRecord[] {
   const cleanQuery = query.trim().toLowerCase();
-  const result = ingredients.filter((ingredient) => {
-    if (!cleanQuery) return true;
-    return [ingredient.id, ingredient.label, ...ingredient.aliases].some((value) => value.toLowerCase().includes(cleanQuery));
-  });
-  return result.slice(0, normaliseLimit(limit, 20, 100));
+  const count = normaliseLimit(limit, 20, 100);
+  if (!cleanQuery) return ingredients.slice(0, count);
+  const words = cleanQuery.split(/[^\p{L}\p{N}]+/u).filter(word => word.length > 1 && !searchStopWords.has(word));
+  const vector = embedText(cleanQuery);
+  return ingredients.flatMap(ingredient => {
+    const names = [ingredient.id, ingredient.label, ...ingredient.aliases].map(value => value.toLowerCase());
+    const exact = names.some(name => name === cleanQuery);
+    const phrase = names.some(name => name.includes(cleanQuery));
+    const matches = words.filter(word => names.some(name => name.includes(word))).length;
+    // Hash-vector collisions alone must not turn an unavailable food into a match.
+    if (!phrase && matches === 0) return [];
+    const similarity = cosineSimilarity(vector, ingredientEmbeddings.get(ingredient.id) ?? []);
+    return [{ingredient, score: (exact ? 4 : 0) + (phrase ? 1 : 0) + matches / Math.max(1, words.length) * 2 + similarity}];
+  }).sort((left, right) => right.score - left.score || left.ingredient.id.localeCompare(right.ingredient.id))
+    .slice(0, count).map(result => result.ingredient);
 }
 
 export function findCatalogIngredientAlternatives(

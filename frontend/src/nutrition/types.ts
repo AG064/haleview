@@ -154,6 +154,7 @@ export interface NutritionPreferences {
 export type PlanDuration = "day" | "week";
 
 export interface PlannedMeal {
+  targetPercentages?: DailyTargetPercentages;
   scheduledAt: string | null;
   id: string;
   date: string;
@@ -172,6 +173,7 @@ export interface PlannedMeal {
 }
 
 export interface MealPlanDay {
+  targetPercentages?: DailyTargetPercentages;
   date: string;
   meals: PlannedMeal[];
   nutrition: NutritionValues;
@@ -365,4 +367,11 @@ export interface RecipeFavourite {
   nutrition: NutritionValues;
   enhancedNutrition: EnhancedNutritionProfile;
   creation?: RecipeCreation;
+}
+
+export interface DailyTargetPercentages {
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fats: number | null;
 }

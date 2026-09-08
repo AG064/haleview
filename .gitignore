@@ -3,13 +3,13 @@ dist/
 coverage/
 .env
 .env.*
+*.env
 *.log
 *.db
 *.db-*
 *.sqlite
 *.sqlite-*
 *.key
-.DS_Store
-*.env
 *.pem
 secrets/
+.DS_Store

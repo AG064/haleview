@@ -1,5 +1,6 @@
 import { defaultTimezone, localDateTimeToIso, TimezoneValidationError } from "../timezone.js";
 import { randomUUID } from "node:crypto";
+import { macroPercentages } from "./calculator.js";
 import { getRecipe, getRecipeNutrition, searchRecipeCandidates } from "./catalog.js";
 import { eligibleForPlanning, recipePlanningWarning } from "./planning-quality.js";
 import { generateMealDraft, type MealDraftOptions, type MealSelection } from "./generation.js";
@@ -22,6 +23,7 @@ export interface PlanTargets {
 }
 
 export interface PlannedMeal {
+  targetPercentages?: DailyTargetPercentages;
   id: string;
   date: string;
   scheduledAt: string | null;
@@ -40,10 +42,28 @@ export interface PlannedMeal {
 }
 
 export interface MealPlanDay {
+  targetPercentages?: DailyTargetPercentages;
   date: string;
   meals: PlannedMeal[];
   nutrition: NutritionValues;
   review?: NutritionPlanReview;
+}
+
+export interface DailyTargetPercentages {
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fats: number | null;
+}
+
+function targetPercentages(nutrition: NutritionValues, targets: PlanTargets): DailyTargetPercentages {
+  const macros = macroPercentages(nutrition, targets.macroTargets);
+  return {
+    calories: targets.calorieTargetKcal > 0 ? Math.round(nutrition.caloriesKcal / targets.calorieTargetKcal * 10000) / 100 : null,
+    protein: targets.macroTargets.proteinG > 0 ? macros.protein : null,
+    carbs: targets.macroTargets.carbsG > 0 ? macros.carbs : null,
+    fats: targets.macroTargets.fatsG > 0 ? macros.fats : null,
+  };
 }
 
 export interface MealPlan {
@@ -373,6 +393,8 @@ export function buildMealPlan(input: BuildMealPlanInput): MealPlan {
     macroTargets: { ...targets.macroTargets },
   };
   const reviewedDays = days.map((day) => ({ ...day,
+    targetPercentages: targetPercentages(day.nutrition, planTargets),
+    meals: day.meals.map(meal => ({...meal, targetPercentages: targetPercentages(meal.nutrition, planTargets)})),
     ...(planTargets.calorieTargetKcal > 0 ? { review: reviewNutrition(day.nutrition, planTargets) } : {}),
   }));
   return {
@@ -399,7 +421,8 @@ export function recalculateMealPlan(plan: MealPlan): MealPlan {
   const next = normalizePlanSchedule(clonePlan(plan));
   next.days = next.days.map((day) => {
     const nutrition = dayNutrition(day.meals);
-    return { ...day, meals: orderedMeals(day.meals), nutrition,
+    return { ...day, meals: orderedMeals(day.meals).map(meal => ({...meal, targetPercentages: targetPercentages(meal.nutrition, next.targets)})), nutrition,
+      targetPercentages: targetPercentages(nutrition, next.targets),
       ...(next.targets.calorieTargetKcal > 0 ? { review: reviewNutrition(nutrition, next.targets) } : {}),
     };
   });

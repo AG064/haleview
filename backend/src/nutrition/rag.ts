@@ -14,14 +14,15 @@ function sourceBlock(result: RecipeSearchResult): string {
   const recipe = result.recipe;
   const ingredients = recipe.ingredients.map((item) => `${item.quantity}${item.unit} ${item.name}`).join(", ");
   const nutrition = result.nutrition;
+  const archive = recipe.source.startsWith("open-recipe-archive:");
   return [
     `Recipe ID: ${recipe.id}`,
     `Title: ${recipe.title}`,
     `Cuisine: ${recipe.cuisine}`,
     `Meal: ${recipe.meal}`,
-    `Servings: ${recipe.servings} recipe unit(s). The source yield is unknown.`,
+    archive ? `Servings: ${recipe.servings} recipe unit(s). The source yield is unknown.` : `Servings: ${recipe.servings} declared serving(s). Ingredient quantities are recipe totals.`,
     `Ingredients: ${ingredients}`,
-    `Nutrition per serving (one recipe unit, not a measured dish serving): ${nutrition.caloriesKcal} calories (${nutrition.caloriesKcal} kcal), ${nutrition.proteinG} g protein, ${nutrition.carbsG} g carbohydrates, ${nutrition.fatsG} g fat`,
+    `Nutrition per serving${archive ? " (one recipe unit, not a measured dish serving)" : ""}: ${nutrition.caloriesKcal} calories (${nutrition.caloriesKcal} kcal), ${nutrition.proteinG} g protein, ${nutrition.carbsG} g carbohydrates, ${nutrition.fatsG} g fat`,
     `Summary: ${recipe.summary}`,
     result.community ? `Community rating: ${result.community.averageStars} of 5 from ${result.community.ratingCount} rating(s). Verified: ${result.community.verified ? "yes" : "no"}` : "Community rating: not rated yet"
   ].join("\n");

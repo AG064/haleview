@@ -19,7 +19,7 @@ import {
   swapMeal,
   type SessionRequest,
 } from "../nutrition/api";
-import type { MealPlan, MealPlanVersion, NutritionValues, PlannedMeal, RecipeSearchResult } from "../nutrition/types";
+import type { DailyTargetPercentages, MealPlan, MealPlanVersion, NutritionValues, PlannedMeal, RecipeSearchResult } from "../nutrition/types";
 
 const mealTypes = ["breakfast", "lunch", "dinner", "snack"];
 
@@ -32,7 +32,16 @@ function MealTime({ meal }: { meal: PlannedMeal }) {
   return <div className="planned-meal-heading"><span className={`planned-meal-icon planned-meal-icon-${tone}`}><Icon aria-hidden="true" /></span><strong>{label}</strong><span className="planned-meal-time"><Clock3 aria-hidden="true" /><time dateTime={meal.scheduledAt ?? meal.time}>{meal.time}</time></span>{meal.scheduledAt === null && <span role="status">Choose a valid local time.</span>}</div>;
 }
 
-function PlanNutritionTotals({ title, nutrition }: { title: string; nutrition: NutritionValues }) {
+function TargetShares({ values, nutrition }: { values?: DailyTargetPercentages; nutrition?: NutritionValues }) {
+  if (!values || Object.values(values).every(value => value === null)) return null;
+  const labels = {calories: "Energy", protein: "Protein", carbs: "Carbohydrate", fats: "Fat"};
+  const fields = {calories: "caloriesKcal", protein: "proteinG", carbs: "carbsG", fats: "fatsG"} as const;
+  return <div className="meal-target-shares" aria-label="Share of daily targets">
+    {(Object.keys(labels) as Array<keyof DailyTargetPercentages>).map(key => <div key={key}><span>{labels[key]}{nutrition ? `: ${Math.round(nutrition[fields[key]])} ${key === "calories" ? "kcal" : "g"}` : ""}</span><strong>{values[key] === null ? "No target" : `${Math.round(values[key])}% of daily target`}</strong>{values[key] !== null && <progress max={100} value={Math.min(100, values[key])} aria-label={`${labels[key]}: ${Math.round(values[key])}% of daily target`} />}</div>)}
+  </div>;
+}
+
+function PlanNutritionTotals({ title, nutrition, percentages }: { title: string; nutrition: NutritionValues; percentages?: DailyTargetPercentages }) {
   return <section className="plan-nutrition-totals" aria-label={title}>
     <h3>{title}</h3>
     <div className="nutrition-score-row">
@@ -41,6 +50,7 @@ function PlanNutritionTotals({ title, nutrition }: { title: string; nutrition: N
       <div><span>Carbohydrate</span><strong>{Math.round(nutrition.carbsG)} g</strong></div>
       <div><span>Fat</span><strong>{Math.round(nutrition.fatsG)} g</strong></div>
     </div>
+    <TargetShares values={percentages} />
   </section>;
 }
 
@@ -268,7 +278,7 @@ export function MealPlanScreen({ request, signedIn }: { request: SessionRequest;
           <div className="plan-days">
             {(activeDay ? [activeDay] : []).map((day) => (
               <AppAccordion className="plan-day" key={`${plan.id}-${day.date}`} title={planDate(day.date)} meta={`${Math.round(day.nutrition.caloriesKcal)} kcal planned`} icon={CalendarDays} defaultOpen>
-                <PlanNutritionTotals title="Day totals" nutrition={day.nutrition} />
+                <PlanNutritionTotals title="Day totals" nutrition={day.nutrition} percentages={day.targetPercentages} />
                 {day.review && <div className="muted-text" role="status"><p>{day.review.summary}</p>{day.review.gaps.length > 0 && <p>Below target: {day.review.gaps.join(", ")}.</p>}{day.review.excesses.length > 0 && <p>Above target: {day.review.excesses.join(", ")}.</p>}</div>}
                 <div className="plan-meals">
                   {day.meals.map((meal) => (
@@ -276,6 +286,7 @@ export function MealPlanScreen({ request, signedIn }: { request: SessionRequest;
                       <div className="planned-meal-main">
                         <MealTime meal={meal} />
                         <h4>{meal.recipeId ? <a className="recipe-title-open" href={`/recipes?recipe=${encodeURIComponent(meal.recipeId)}`}>{meal.title}</a> : meal.title}{meal.manual ? " (manual)" : meal.source === "generated" ? " (created)" : ""}</h4>
+                        <TargetShares values={meal.targetPercentages} nutrition={meal.nutrition} />
                         <span className="planned-meal-energy">{Math.round(meal.nutrition.caloriesKcal)} kcal</span>
                       </div>
                       <details className="planned-meal-edit">

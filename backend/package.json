@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-data.mjs",
+    "pretest": "npm run build",
+    "test": "node --test tests/*.test.mjs",
     "check": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "dev": "tsx watch src/server.ts",

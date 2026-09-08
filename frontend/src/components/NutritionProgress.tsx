@@ -67,7 +67,7 @@ export function NutritionProgress({ progress, compact = false }: NutritionProgre
             </div>
             <MacroBreakdown nutrition={today.nutrition} label="Daily macro breakdown" />
             <div className="micronutrient-section">
-              <div className="micronutrient-heading"><strong>Daily micronutrients</strong><span>General adult Daily Values</span></div>
+              <div className="micronutrient-heading"><strong>Micronutrients and fibre</strong><span>General adult Daily Values</span></div>
               <div className="micronutrient-grid">
                 {progress.micronutrientGuidance.map((item) => <MicronutrientRow key={item.key} item={item} />)}
               </div>

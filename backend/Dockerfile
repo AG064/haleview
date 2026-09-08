@@ -3,9 +3,11 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
-COPY tsconfig.json ./
+COPY tsconfig.json eslint.config.js ./
 COPY src ./src
-RUN npm run build
+COPY scripts ./scripts
+COPY tests ./tests
+RUN npm run lint && npm test
 
 FROM node:22-alpine AS runtime
 
@@ -14,7 +16,6 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/src/nutrition/data ./dist/nutrition/data
 USER node
 EXPOSE 3001
 CMD ["node", "dist/server.js"]
