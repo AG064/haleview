@@ -38,42 +38,8 @@
   gap: 12px;
 }
 
-.top-account .account-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.top-account .account-label svg {
-  width: 15px;
-  height: 15px;
-  stroke-width: 1.8;
-}
-
 .top-account .text-button {
   padding: 0;
-}
-
-.guide-button {
-  display: inline-flex !important;
-  flex: 0 0 auto;
-  width: max-content;
-  min-height: 34px;
-  padding: 7px 10px !important;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--panel);
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.guide-button > svg,
-.guide-button > span {
-  display: block;
-}
-
-.guide-button > span {
-  line-height: 16px;
 }
 
 .account-menu {
@@ -149,8 +115,8 @@
   color: var(--accent);
   font-size: 0.69rem;
   font-weight: 750;
-  letter-spacing: normal;
-  text-transform: none;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .intro {
@@ -159,7 +125,7 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   color: var(--ink);
-  background: var(--panel);
+  background: #f7faf7;
 }
 
 .intro > div:first-child {
@@ -190,15 +156,15 @@
 }
 
 .notice.error {
-  border-color: var(--danger);
+  border-color: #e6c3c3;
   color: var(--danger);
-  background: var(--color-error-surface);
+  background: #fff8f8;
 }
 
 .notice.success {
-  border-color: var(--color-success);
+  border-color: #bedfce;
   color: var(--accent-dark);
-  background: var(--color-success-surface);
+  background: #f3fbf6;
 }
 
 .account-panel {
@@ -275,18 +241,18 @@
   justify-content: center;
   gap: 10px;
   padding: 9px 14px;
-  border: 1px solid var(--line);
+  border: 1px solid #c7d1cc;
   border-radius: 8px;
   color: var(--ink);
-  background: var(--panel);
+  background: #fff;
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
 .provider-button:hover:not(:disabled) {
-  border-color: var(--line);
-  background: var(--panel);
+  border-color: #91a39b;
+  background: #f8faf8;
 }
 
 .provider-button:disabled {
@@ -323,7 +289,7 @@
   padding: 3px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--panel);
+  background: #f1f4f1;
 }
 
 .account-switch button {
@@ -339,7 +305,7 @@
 
 .account-switch button.active {
   color: var(--ink);
-  background: var(--panel);
+  background: #fff;
   box-shadow: 0 1px 2px rgba(33, 48, 45, 0.12);
 }
 
@@ -407,7 +373,7 @@
   overflow-wrap: anywhere;
   border: 1px solid var(--line);
   color: var(--ink);
-  background: var(--panel);
+  background: #f5f7f4;
   font: 0.78rem/1.4 Consolas, "Courier New", monospace;
 }
 

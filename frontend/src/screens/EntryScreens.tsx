@@ -1,7 +1,4 @@
 import type { FormEvent } from "react";
-import { ThemeToggle } from "../components/ThemeToggle";
-import { LandingPreview } from "../components/LandingPreview";
-import { ChartLine, Leaf, UserRound, type LucideIcon } from "lucide-react";
 
 type AccountMode = "signin" | "create";
 
@@ -13,7 +10,6 @@ interface NotFoundScreenProps {
 export function NotFoundScreen({ signedIn, onReturn }: NotFoundScreenProps) {
   return (
     <main className="status-page">
-      <div className="appearance-row"><ThemeToggle /></div>
       <section className="status-card">
         <p className="eyebrow">404</p>
         <h1>Page not found.</h1>
@@ -36,32 +32,28 @@ export function OverviewScreen({ onOpenAccess, onContinueAsGuest }: OverviewScre
     <main className="overview-screen">
       <header className="overview-topbar">
         <strong>Haleview</strong>
-        <div className="overview-account"><ThemeToggle /><button className="text-button" type="button" onClick={onOpenAccess}>Sign in</button></div>
+        <button className="text-button" type="button" onClick={onOpenAccess}>Sign in</button>
       </header>
 
       <section className="overview-hero" aria-labelledby="overview-title">
-        <div className="overview-hero-copy">
-          <h1 id="overview-title">Plan your meals.<br /><span>See your progress.</span></h1>
-          <p>Find meals that fit your preferences, turn ingredients into a shopping list, and keep track of your nutrition.</p>
-          <div className="overview-actions">
-            <button className="primary-button" type="button" onClick={onOpenAccess}>Get started</button>
-            <button className="secondary-button" type="button" onClick={onContinueAsGuest}>Continue as guest</button>
-          </div>
+        <h1 id="overview-title">Health, progress, and guidance.</h1>
+        <p>Save your health profile. Track changes. Get clear guidance.</p>
+        <div className="overview-actions">
+          <button className="primary-button" type="button" onClick={onOpenAccess}>Open Haleview</button>
+          <button className="secondary-button" type="button" onClick={onContinueAsGuest}>Continue as guest</button>
         </div>
-        <LandingPreview />
       </section>
 
       <section className="overview-points" aria-label="Haleview overview">
-        <OverviewPoint className="profile-point" icon={UserRound} number="01" title="Start with your profile" text="Add your goals, food preferences and activity level. These details guide your calculations and meal choices." />
-        <OverviewPoint className="progress-point" icon={Leaf} number="02" title="Plan meals and shopping" text="Explore recipes, build a meal plan and turn its ingredients into a shopping list." />
-        <OverviewPoint className="hale-point" icon={ChartLine} number="03" title="See your progress" text="Record meals and activity, review changes over time and get guidance from Hale." />
+        <OverviewPoint className="profile-point" icon="fa-user" number="01" title="Profile" text="Save the details used for your results." />
+        <OverviewPoint className="progress-point" icon="fa-chart-line" number="02" title="Progress" text="Review records, trends, and goals." />
+        <OverviewPoint className="hale-point" icon="fa-heart-pulse" number="03" title="Hale" text="Get guidance from the data you save." />
       </section>
 
       <section className="hale-overview-card" aria-labelledby="hale-overview-title">
-        <span className="hale-overview-icon" aria-hidden="true"><Leaf /></span>
-        <div className="hale-overview-copy"><h2 id="hale-overview-title">Guidance in context.</h2>
-          <p>Hale connects your profile with your recent progress. Core calculations and local guidance work without online AI.</p>
-        </div>
+        <span className="hale-overview-icon" aria-hidden="true"><i className="fa-solid fa-leaf" /></span>
+        <div><h2 id="hale-overview-title">Guidance in context.</h2></div>
+        <p>Hale uses your saved profile and recent progress. Core calculations still work without online guidance.</p>
       </section>
 
       <footer className="overview-footer">Your profile remains private unless you change its sharing setting.</footer>
@@ -71,17 +63,17 @@ export function OverviewScreen({ onOpenAccess, onContinueAsGuest }: OverviewScre
 
 interface OverviewPointProps {
   className: string;
-  icon: LucideIcon;
+  icon: string;
   number: string;
   title: string;
   text: string;
 }
 
-function OverviewPoint({ className, icon: Icon, number, title, text }: OverviewPointProps) {
+function OverviewPoint({ className, icon, number, title, text }: OverviewPointProps) {
   return (
     <article className={`overview-point ${className}`}>
       <div className="overview-point-meta">
-        <span className="overview-point-icon" aria-hidden="true"><Icon /></span>
+        <span className="overview-point-icon" aria-hidden="true"><i className={`fa-solid ${icon}`} /></span>
         <span>{number}</span>
       </div>
       <h2>{title}</h2>
@@ -129,7 +121,6 @@ export function AccessScreen(props: AccessScreenProps) {
   return (
     <main className="access-screen">
       <section className="access-card" aria-labelledby="access-title">
-        <div className="appearance-row"><ThemeToggle /></div>
         <header className="access-heading">
           <h1 id="access-title">Sign in</h1>
           <p>Use an account on any device, or continue as guest on this browser.</p>
@@ -149,7 +140,7 @@ export function AccessScreen(props: AccessScreenProps) {
             <form className="account-form" aria-label={props.accountMode === "signin" ? "Email sign in" : "Email account creation"} onSubmit={props.onEmailSubmit}>
               <label>Email<input type="email" value={props.accountEmail} autoComplete="email" onChange={(event) => props.onAccountEmailChange(event.target.value)} /></label>
               <label>Password<input type="password" value={props.accountPassword} autoComplete={props.accountMode === "signin" ? "current-password" : "new-password"} onChange={(event) => props.onAccountPasswordChange(event.target.value)} /></label>
-              <button className="primary-button" type="submit" disabled={props.accountBusy} aria-busy={props.accountBusy}>{props.accountMode === "signin" ? "Sign in" : "Create account"}</button>
+              <button className="primary-button" type="submit" disabled={props.accountBusy}>{props.accountMode === "signin" ? "Sign in" : "Create account"}</button>
               {props.accountMode === "signin" && <button className="text-button reset-toggle" type="button" onClick={props.onShowReset}>Reset password</button>}
             </form>
           </div>
@@ -160,7 +151,7 @@ export function AccessScreen(props: AccessScreenProps) {
             <h2>Reset password</h2>
             <p className="account-note">Enter the account email. We will send a reset link.</p>
             <label>Account email<input type="email" value={props.resetEmail} autoComplete="email" onChange={(event) => props.onResetEmailChange(event.target.value)} /></label>
-            <button className="primary-button" type="submit" disabled={props.accountBusy} aria-busy={props.accountBusy}>Send reset link</button>
+            <button className="primary-button" type="submit" disabled={props.accountBusy}>Send reset link</button>
             <button className="text-button" type="button" onClick={props.onHideReset}>Back to sign in</button>
           </form>
         )}
@@ -169,7 +160,7 @@ export function AccessScreen(props: AccessScreenProps) {
           <form className="reset-form" onSubmit={props.onNewPasswordSubmit}>
             <h2>Set new password</h2>
             <label>New password<input type="password" value={props.resetPassword} autoComplete="new-password" onChange={(event) => props.onResetPasswordChange(event.target.value)} /></label>
-            <button className="primary-button" type="submit" disabled={props.accountBusy} aria-busy={props.accountBusy}>Set password</button>
+            <button className="primary-button" type="submit" disabled={props.accountBusy}>Set password</button>
           </form>
         )}
 
@@ -177,7 +168,7 @@ export function AccessScreen(props: AccessScreenProps) {
           <form className="reset-form" onSubmit={props.onTwoFactorSubmit}>
             <h2>Two-step sign-in</h2>
             <label>Authenticator code<input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={props.twoFactorCode} onChange={(event) => props.onTwoFactorCodeChange(event.target.value)} /></label>
-            <button className="primary-button" type="submit" disabled={props.accountBusy} aria-busy={props.accountBusy}>Check code</button>
+            <button className="primary-button" type="submit" disabled={props.accountBusy}>Check code</button>
           </form>
         )}
 
@@ -188,7 +179,7 @@ export function AccessScreen(props: AccessScreenProps) {
         {showGuestOption && (
           <div className="guest-option">
             <button className="secondary-button guest-button" type="button" onClick={props.onContinueAsGuest}>Continue as guest</button>
-            <p>Guest data is temporary. Leaving or reloading clears this visit.</p>
+            <p>Guest data stays in this browser.</p>
             <button className="text-button overview-back" type="button" onClick={props.onBack}>Back to overview</button>
           </div>
         )}

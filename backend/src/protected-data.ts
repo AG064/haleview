@@ -1,4 +1,3 @@
-import { dataFilePath } from "./runtime-path.js";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes, createCipheriv, createDecipheriv, createHmac } from "node:crypto";
 import { dirname, resolve } from "node:path";
@@ -43,7 +42,7 @@ function loadKey(): Buffer {
     throw new Error("DATA_ENCRYPTION_KEY_FILE must contain a 32-byte key.");
   }
 
-  const dataFile = dataFilePath();
+  const dataFile = resolve(process.env.DATA_FILE ?? "./data/numbers-dont-lie.db");
   const generatedFile = `${dataFile}.key`;
   mkdirSync(dirname(generatedFile), { recursive: true });
   const existing = readKeyFile(generatedFile);
@@ -56,7 +55,7 @@ function loadKey(): Buffer {
 }
 
 const key = loadKey();
-const lookupKey = createHmac("sha256", key).update("haleview lookup v1").digest();
+const lookupKey = createHmac("sha256", key).update("numbers-dont-lie lookup v1").digest();
 
 export function protectedLookupHash(value: string): string {
   // HMAC supports exact lookup without storing the source value.
@@ -98,6 +97,6 @@ export function protectedDataKeyPath(): string {
   if (configuredFile) {
     return resolve(configuredFile);
   }
-  const dataFile = dataFilePath();
+  const dataFile = resolve(process.env.DATA_FILE ?? "./data/numbers-dont-lie.db");
   return `${dataFile}.key`;
 }

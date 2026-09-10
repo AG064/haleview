@@ -3,10 +3,6 @@ export type AppRoute =
   | "progress"
   | "records"
   | "hale"
-  | "nutrition"
-  | "recipes"
-  | "meal-plan"
-  | "shopping-list"
   | "profile"
   | "profile-setup"
   | "settings"
@@ -18,10 +14,6 @@ const paths: Record<Exclude<AppRoute, "not-found">, string> = {
   progress: "/dashboard/progress",
   records: "/dashboard/records",
   hale: "/dashboard/hale",
-  nutrition: "/nutrition",
-  recipes: "/recipes",
-  "meal-plan": "/meal-plan",
-  "shopping-list": "/shopping-list",
   profile: "/profile",
   "profile-setup": "/profile/setup",
   settings: "/settings",

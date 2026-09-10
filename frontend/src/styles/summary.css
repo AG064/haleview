@@ -8,7 +8,7 @@
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--panel);
+  background: #f4f7f4;
 }
 
 .score-gauge {
@@ -35,7 +35,7 @@
   height: 84px;
   place-content: center;
   border-radius: 50%;
-  background: var(--panel);
+  background: #f4f7f4;
   text-align: center;
 }
 
@@ -115,7 +115,7 @@
   place-items: center;
   width: 19px;
   height: 19px;
-  border: 1px solid var(--line);
+  border: 1px solid #a8c8ba;
   border-radius: 50%;
   color: var(--accent);
   font-size: 0.7rem;
