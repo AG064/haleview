@@ -1,0 +1,101 @@
+:root {
+  --on-accent: #233522;
+  --color-error-surface: #4d3935;
+  --color-success-surface: #3a4e3a;
+  --chart-carbs: #cfcd8f;
+  --chart-fat: #d8b182;
+  --color-card-border: #505c4f;
+  --line: var(--color-card-border);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-canvas: #e9e6dd;
+  --color-surface-1: #f5f3eb;
+  --color-surface-2: #eeeee3;
+  --color-surface-sage: #e0e8d8;
+  --color-surface-clay: #eee2d6;
+  --color-text: #303a30;
+  --color-text-muted: #56624f;
+  --color-text-faint: #606c58;
+  --color-border: #778269;
+  --color-sage: #42663d;
+  --color-sage-strong: #2f512c;
+  --color-clay: #815439;
+  --color-oat: #735f2d;
+  --color-oat-fill: #94623f;
+  --color-danger: #a33c36;
+  --color-success: #426b37;
+  --accent: #42663d;
+  --on-accent: #ffffff;
+  --color-error-surface: #f0e0d9;
+  --color-success-surface: #e0ead7;
+  --chart-carbs: #66733b;
+  --chart-fat: #94623f;
+  --color-card-border: #c9cdbd;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.theme-toggle svg { width: 18px; height: 18px; }
+.theme-toggle:hover { background: var(--accent-soft); }
+.theme-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.overview-account { display: flex; align-items: center; gap: 20px; }
+.appearance-row { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+.overview-topbar .text-button { min-height: 44px; }
+.overview-points article { border: 1px solid var(--color-card-border); }
+.overview-point-icon, .progress-point .overview-point-icon, .hale-point .overview-point-icon, .hale-overview-icon {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.progress-point .overview-point-meta { color: var(--color-clay); }
+.hale-point .overview-point-meta { color: var(--color-oat); }
+.hale-point .overview-point-icon { color: var(--color-oat); background: var(--color-surface-clay); }
+.progress-point .overview-point-icon { color: var(--color-clay); background: var(--color-surface-clay); }
+.primary-button, .app-shell .primary-button { color: var(--on-accent); background: var(--accent); }
+.primary-button { transition: transform 150ms ease; }
+.primary-button:hover:not(:disabled), .app-shell .primary-button:hover:not(:disabled) { color: var(--on-accent); background: var(--accent-dark); }
+.app-shell .wizard-step { border-color: var(--color-border); color: var(--accent); }
+input:not([type="range"],[type="checkbox"]), select, textarea, .secondary-button, .app-shell .secondary-button { border-color: var(--color-border); }
+input, select, textarea { transition: box-shadow 150ms ease; }
+.app-shell .wizard-step.current, .app-shell .recipe-pagination [aria-current="page"] { background: var(--accent); color: var(--on-accent); }
+.app-shell .wizard-step.current > span { background: var(--on-accent); color: var(--accent); border-color: transparent; }
+.app-shell .panel { border-color: var(--color-card-border); box-shadow: none; }
+.optional-section { opacity: 1; }
+.reset-toggle, .overview-back { opacity: 1; }
+.disabled-consent { opacity: 1; }
+.notice.error { background: var(--color-error-surface); border-color: var(--danger); }
+.notice.success { background: var(--color-success-surface); border-color: var(--color-success); }
+.bmi-healthy { background: var(--color-success-surface); }
+.activity-level-1 { background: var(--surface); }
+.activity-level-2 { background: var(--accent-soft); }
+.activity-level-3 { background: var(--color-sage); }
+.activity-level-4 { background: var(--color-sage-strong); }
+.priority-high { color: var(--danger); background: var(--color-error-surface); }
+.priority-medium { color: var(--color-oat); background: var(--color-surface-clay); }
+.priority-low { color: var(--color-success); background: var(--color-success-surface); }
+
+@media (max-width: 1200px) {
+  .topbar { flex-wrap: wrap; gap: 12px; }
+  .main-tabs { order: 3; width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
+  .main-tabs button { flex: 1 0 auto; }
+}
+@media (max-width: 520px) {
+  .top-account { width: 100%; justify-content: flex-start; gap: 12px; flex-wrap: wrap; }
+  .overview-account { gap: 12px; }
+  .theme-toggle { padding: 8px 10px; }
+}

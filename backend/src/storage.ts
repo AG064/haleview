@@ -1,5 +1,6 @@
+import { dataFilePath } from "./runtime-path.js";
 import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { buildProfile, parsePrivacy, type HealthProfile, type PrivacySettings } from "./profile.js";
 import { buildLocalGuidance, type Guidance } from "./recommendations.js";
@@ -60,7 +61,7 @@ interface ActivityInput {
   recordedAt: string;
 }
 
-const databasePath = resolve(process.env.DATA_FILE ?? "./data/numbers-dont-lie.db");
+const databasePath = dataFilePath();
 mkdirSync(dirname(databasePath), { recursive: true });
 
 export const database = new DatabaseSync(databasePath);

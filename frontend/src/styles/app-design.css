@@ -1,0 +1,79 @@
+.app-shell { width: min(1280px, calc(100% - 64px)); padding-top: 28px; }
+.app-shell .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; padding-bottom: 32px; }
+.app-shell .product-name { grid-column: 1; grid-row: 1; }
+.app-shell .top-account { grid-column: 2; grid-row: 1; width: auto; }
+.app-shell .main-tabs { grid-column: 1 / -1; grid-row: 2; width: 100%; padding: 6px; border-radius: 12px; background: var(--panel); }
+.app-shell .main-tabs > button { min-height: 44px; flex: 1 0 auto; padding: 12px 16px; }
+.app-shell .product-name h1 { font-size: 1.5rem; }
+.app-shell .dashboard-tabs { margin-bottom: 28px; }
+.app-shell .dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.app-shell .dashboard-heading .dashboard-tabs { margin: 0; flex-shrink: 0; }
+.dashboard-heading-copy > p:last-child { margin: 8px 0 0; color: var(--muted); font-size: 0.875rem; }
+.app-shell .planner-empty-state { margin-top: 24px; }
+.app-shell .hale-guidance-layout + .app-accordion { margin-top: 24px; }
+.app-shell :is(.page-panel, .planner-panel, .shopping-panel, .recipe-panel, .dashboard-overview) { padding: 0; border: 0; background: transparent; }
+.app-shell :is(.recipe-panel, .shopping-panel) > .panel-heading h2 { font-size: clamp(1.875rem, 3vw, 2.5rem); line-height: 1.2; letter-spacing: -0.025em; }
+.app-shell .page-panel > .panel-heading { align-items: center; gap: 24px; margin-bottom: 28px; }
+.app-shell .panel-heading :is(h2, h3) { margin: 0; }
+.app-shell .panel-heading .eyebrow { margin: 0 0 8px; }
+.app-shell :is(.page-panel > .panel-heading h2, .dashboard-heading h2, .profile-hero-heading h2, .settings-hero-heading h2, .planner-focus h2) { font-size: clamp(1.875rem, 3vw, 2.5rem); line-height: 1.2; letter-spacing: -0.025em; }
+.app-shell :is(.intro, .profile-hero, .settings-hero, .planner-focus) { padding: 32px; border: 0; border-radius: 20px; background: var(--panel); }
+.app-shell :is(.intro, .profile-hero, .settings-hero, .planner-focus) p:not(.eyebrow) { max-width: 68ch; font-size: 1rem; line-height: 1.6; }
+.app-shell :is(.dashboard-next-card, .nutrition-log-card) { padding: 32px; border-color: var(--color-card-border); border-radius: 20px; background: var(--panel); }
+.app-shell .dashboard-next-copy h3 { font-size: clamp(1.875rem, 3vw, 2.75rem); line-height: 1.2; color: var(--accent); }
+.app-shell :is(.dashboard-simple-grid, .profile-page, .settings-page, .nutrition-progress) { gap: 24px; }
+.app-shell :is(.dashboard-today-card, .dashboard-track-card, .nutrition-daily-card, .app-accordion, .recipe-card) { border-color: var(--color-card-border); border-radius: 16px; background: var(--panel); }
+.app-shell .app-accordion > summary { padding: 20px 24px; min-height: 80px; }
+.app-shell .app-accordion-body { padding: 24px; }
+.app-shell .app-accordion-copy > strong { font-size: 1rem; line-height: 1.4; }
+.app-shell :is(.field-grid > label, .planner-generate label, .nutrition-log-fields label, .recipe-query, .metric-label, .recipe-card-facts, .recipe-card-meta) { font-size: 0.875rem; line-height: 1.5; }
+.app-shell :is(.nutrition-log-heading p:last-child, .field-description, .recipe-card p:not(.eyebrow)) { font-size: 0.9375rem; line-height: 1.6; }
+.app-shell :is(.primary-button, .secondary-button, .compact-button) { min-height: 48px; padding: 12px 20px; border-radius: 10px; font-size: 0.9375rem; }
+.app-shell .recipe-card-content { padding: 20px; }
+.app-shell .recipe-card h3 { font-size: 1.125rem; line-height: 1.4; }
+.app-shell .recipe-card-action { min-height: 48px; font-size: 0.875rem; }
+.app-shell .slider-field { padding: 16px; border-radius: 12px; }
+.app-shell .wizard-nav { margin-bottom: 28px; }
+.app-shell .wizard-step { min-height: 52px; border-radius: 10px; }
+.app-shell .planner-generate { padding: 20px; gap: 16px; border-radius: 12px; }
+.app-shell .recipe-results-heading { gap: 12px; font-size: 0.875rem; line-height: 1.5; }
+.app-shell .recipe-page-numbers button { min-width: 44px; min-height: 44px; padding: 10px; }
+
+.landing-lifestyle-card > h2 { font-size: 1.5rem; line-height: 1.3; }
+.landing-lifestyle-card > p { margin: 10px 0 20px; color: var(--muted); line-height: 1.5; }
+.landing-lifestyle-features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.landing-lifestyle-features li { display: grid; gap: 10px; align-content: start; color: var(--ink); font-size: 0.8125rem; line-height: 1.4; }
+.landing-lifestyle-features svg { width: 24px; height: 24px; color: var(--accent); }
+.landing-preview-photo img { object-position: 50% 62%; }
+
+.basic-profile-description { margin: 0 0 24px; max-width: 65ch; color: var(--muted); font-size: 0.9375rem; line-height: 1.6; }
+.profile-number-field, .app-shell .basic-profile-grid > label { display: grid; align-content: start; gap: 8px; }
+.profile-number-field > label, .app-shell .basic-profile-grid > label { font-size: 0.875rem; font-weight: 600; line-height: 1.5; }
+.profile-number-control { position: relative; }
+.app-shell .profile-number-input, .app-shell .basic-profile-grid > label > select { width: 100%; height: 48px; min-height: 48px; margin: 0; padding: 12px 16px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--surface); color: var(--ink); font-size: 1rem; line-height: 1.25; }
+.app-shell .profile-number-input { padding-right: 64px; text-align: left; font-variant-numeric: tabular-nums; appearance: textfield; }
+.profile-number-input::-webkit-inner-spin-button, .profile-number-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.profile-number-control > span { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.875rem; pointer-events: none; }
+.profile-number-field .field-error { margin: 0; font-size: 0.8125rem; }
+.app-shell .profile-number-input[aria-invalid="true"] { border-color: var(--danger); }
+.recipe-nutrition-filters { margin: 24px 0 0; padding: 24px 0 0; border: 0; border-top: 1px solid var(--line); }
+.recipe-nutrition-filters legend { margin: 0 0 8px; padding: 0; font-size: 1rem; line-height: 1.5; }
+.recipe-nutrition-filters > p { margin: 0 0 20px; max-width: 70ch; color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
+.recipe-nutrition-filters .recipe-filter-grid { gap: 16px; }
+
+@media (max-width: 680px) {
+  .app-shell .dashboard-heading { flex-direction: column; align-items: stretch; gap: 16px; }
+  .app-shell { width: calc(100% - 24px); padding-top: 16px; }
+  .app-shell .topbar { gap: 16px; padding-bottom: 24px; }
+  .app-shell .top-account { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+  .app-shell .main-tabs { grid-row: 3; }
+  .app-shell .main-tabs > button { padding: 12px; }
+  .app-shell :is(.intro, .profile-hero, .settings-hero, .planner-focus, .dashboard-next-card, .nutrition-log-card) { padding: 24px 20px; border-radius: 16px; }
+  .app-shell .app-accordion > summary { padding: 16px; }
+  .app-shell .app-accordion-body { padding: 20px 16px; }
+  .app-shell :is(.dashboard-simple-grid, .profile-page, .settings-page, .nutrition-progress) { gap: 20px; }
+  .app-shell .recipe-results-heading { align-items: start; flex-direction: column; }
+  .app-shell .recipe-card-content { padding: 16px; }
+  .app-shell .slider-field { padding: 12px; }
+  .landing-lifestyle-features { gap: 8px; }
+}

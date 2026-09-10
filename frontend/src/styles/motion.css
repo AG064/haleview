@@ -1,0 +1,108 @@
+:root {
+  --motion-fast: 140ms;
+  --motion-enter: 220ms;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(.app-shell, .access-screen, .overview-screen) :is(button, summary) {
+    transition: transform var(--motion-fast) var(--motion-ease),
+      background-color var(--motion-fast) ease, border-color var(--motion-fast) ease,
+      box-shadow var(--motion-fast) ease;
+  }
+
+  .app-shell :is(.primary-button, .secondary-button, .text-button, .theme-toggle):active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  :is(.main-tabs, .dashboard-tabs, .planner-day-picker, .recipe-view-switch, .create-tabs) button:is([aria-pressed="true"], [aria-current="page"]) {
+    animation: control-select 180ms var(--motion-ease);
+  }
+
+  .app-shell > :is(.panel, .nutrition-page),
+  .dashboard-simple-grid,
+  .nutrition-insights-content,
+  .recipe-create,
+  .recipe-detail {
+    animation: content-enter var(--motion-enter) var(--motion-ease);
+  }
+
+  .recipe-grid > .recipe-card {
+    animation: content-enter 240ms var(--motion-ease) backwards;
+  }
+  .recipe-grid > .recipe-card:nth-child(4n + 2) { animation-delay: 25ms; }
+  .recipe-grid > .recipe-card:nth-child(4n + 3) { animation-delay: 50ms; }
+  .recipe-grid > .recipe-card:nth-child(4n) { animation-delay: 75ms; }
+
+  .recipe-card,
+  .create-source-card,
+  .created-saved-card {
+    transition: transform 180ms var(--motion-ease), border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .recipe-card-action svg,
+  .app-accordion-chevron {
+    transition: transform 180ms var(--motion-ease);
+  }
+  .app-accordion[open] > .app-accordion-body {
+    animation: content-enter 180ms var(--motion-ease);
+  }
+
+  @supports (interpolate-size: allow-keywords) {
+    .app-accordion::details-content {
+      interpolate-size: allow-keywords;
+      height: 0;
+      overflow: clip;
+      transition: height 220ms var(--motion-ease), content-visibility 220ms allow-discrete;
+    }
+    .app-accordion[open]::details-content { height: auto; }
+  }
+
+  .dashboard-activity-track > span { transition: width 350ms var(--motion-ease); }
+  .dashboard-ring-value { transition: stroke-dasharray 350ms var(--motion-ease); }
+  :is(.notice.success, .success-text, .created-remove) {
+    animation: content-enter 180ms var(--motion-ease);
+  }
+  :is(.loading-lines span, .loading-title, .loading-tabs span) {
+    background-image: linear-gradient(100deg, transparent 25%, color-mix(in srgb, var(--accent) 12%, transparent) 50%, transparent 75%);
+    background-size: 220% 100%;
+    animation: loading-sweep 1800ms ease-in-out infinite;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .app-shell :is(.primary-button, .secondary-button):hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+    .app-shell :is(.primary-button, .secondary-button):active:not(:disabled) {
+      transform: translateY(0) scale(0.97);
+    }
+    .recipe-card:hover,
+    .recipe-card:focus-within,
+    :is(.create-source-card, .created-saved-card):hover:not(:disabled) {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 20px color-mix(in srgb, var(--ink) 9%, transparent);
+    }
+    .recipe-card:hover .recipe-card-action svg { transform: translateX(3px); }
+  }
+}
+
+@keyframes content-enter {
+  from { opacity: 0.7; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes control-select {
+  from { transform: scale(0.97); }
+  to { transform: scale(1); }
+}
+@keyframes loading-sweep {
+  from { background-position: 180% 0; }
+  to { background-position: -40% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell *, .app-shell *::before, .app-shell *::after, .app-shell *::details-content {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

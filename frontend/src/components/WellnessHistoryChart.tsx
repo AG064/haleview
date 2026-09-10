@@ -1,11 +1,12 @@
 import { memo, useEffect, useRef } from "react";
 import type { AnalyticsHistoryRecord } from "../types";
+import { displayDateOnly } from "../format";
 
 const layers = [
-  { key: "bmiScore", label: "BMI", weight: 0.3, color: "#8eaa90" },
-  { key: "activityScore", label: "Activity", weight: 0.3, color: "#7997a0" },
-  { key: "goalProgress", label: "Goal", weight: 0.2, color: "#c09562" },
-  { key: "habitsScore", label: "Habits", weight: 0.2, color: "#9b7d6c" }
+  { key: "bmiScore", label: "BMI", weight: 0.3, color: "--accent" },
+  { key: "activityScore", label: "Activity", weight: 0.3, color: "--chart-carbs" },
+  { key: "goalProgress", label: "Goal", weight: 0.2, color: "--chart-fat" },
+  { key: "habitsScore", label: "Habits", weight: 0.2, color: "--color-success" }
 ] as const;
 
 function contribution(record: AnalyticsHistoryRecord, layer: typeof layers[number]): number {
@@ -25,6 +26,7 @@ export const WellnessHistoryChart = memo(function WellnessHistoryChart({ records
     const canvas = canvasRef.current;
     if (!canvas || records.length === 0) return;
     const draw = () => {
+      if (!canvas.isConnected) return;
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       const scale = window.devicePixelRatio || 1;
@@ -46,7 +48,7 @@ export const WellnessHistoryChart = memo(function WellnessHistoryChart({ records
         let total = 0;
         for (const layer of layers) {
           const amount = contribution(records[0], layer);
-          context.fillStyle = layer.color;
+          context.fillStyle = getComputedStyle(canvas).getPropertyValue(layer.color).trim();
           context.fillRect(width / 2 - 22, yAt(total + amount), 44, yAt(total) - yAt(total + amount));
           total += amount;
         }
@@ -58,7 +60,7 @@ export const WellnessHistoryChart = memo(function WellnessHistoryChart({ records
           upper.forEach((value, index) => index === 0 ? context.moveTo(xAt(index), yAt(value)) : context.lineTo(xAt(index), yAt(value)));
           for (let index = lower.length - 1; index >= 0; index -= 1) context.lineTo(xAt(index), yAt(lower[index]));
           context.closePath();
-          context.fillStyle = layer.color;
+          context.fillStyle = getComputedStyle(canvas).getPropertyValue(layer.color).trim();
           context.fill();
           lower = upper;
         }
@@ -68,26 +70,28 @@ export const WellnessHistoryChart = memo(function WellnessHistoryChart({ records
       records.forEach((record, index) => index === 0
         ? context.moveTo(xAt(index), yAt(record.wellnessScore))
         : context.lineTo(xAt(index), yAt(record.wellnessScore)));
-      context.strokeStyle = "#ebe4d8";
+      context.strokeStyle = getComputedStyle(canvas).getPropertyValue("--ink").trim();
       context.lineWidth = 2;
       context.stroke();
     };
     draw();
     const observer = new ResizeObserver(draw);
     observer.observe(canvas);
-    return () => observer.disconnect();
+    const themeObserver = new MutationObserver(draw);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => { observer.disconnect(); themeObserver.disconnect(); };
   }, [records]);
 
   return (
     <div className="wellness-history" role="img" aria-label="Wellness score and weighted component history">
       <canvas ref={canvasRef} aria-hidden="true" />
       <div className="wellness-legend">
-        {layers.map((layer) => <span key={layer.key}><i style={{ backgroundColor: layer.color }} />{layer.label}</span>)}
+        {layers.map((layer) => <span key={layer.key}><i style={{ backgroundColor: `var(${layer.color})` }} />{layer.label}</span>)}
         <span><i className="score-line-key" />Score</span>
       </div>
       <div className="wellness-dates" aria-hidden="true">
-        <span>{new Date(records[0].recordedAt).toLocaleDateString(undefined, { month: "numeric", day: "numeric" })}</span>
-        {records.length > 1 && <span>{new Date(records[records.length - 1].recordedAt).toLocaleDateString(undefined, { month: "numeric", day: "numeric" })}</span>}
+        <span>{displayDateOnly(records[0].recordedAt)}</span>
+        {records.length > 1 && <span>{displayDateOnly(records[records.length - 1].recordedAt)}</span>}
       </div>
     </div>
   );

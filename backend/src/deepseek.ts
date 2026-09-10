@@ -211,8 +211,22 @@ function safeSummaryFocus(value: unknown): string | null {
   return /[.!?]$/u.test(focus) ? focus : `${focus}.`;
 }
 
+function conflictsWithActivitySchedule(value: string, weeklyActivityDays: number): boolean {
+  const words = ["zero", "one", "two", "three", "four", "five", "six", "seven"];
+  const frequency = /\b(\d+|zero|one|two|three|four|five|six|seven)\s+(?:weekly\s+(?:workouts?|sessions?|active days?)|(?:workouts?|sessions?|active days?|times)\s+(?:per|a|each)\s+week)\b/giu;
+  return [...value.matchAll(frequency)].some((match) => {
+    const word = words.indexOf(match[1].toLowerCase());
+    return (word >= 0 ? word : Number(match[1])) !== weeklyActivityDays;
+  });
+}
+
 function rejectedModelResponse(correction: string): ParsedModelResponse {
   return { guidance: null, correction };
+}
+
+function summaryFocus(value: unknown): string | null {
+  if (isRecord(value) && Object.keys(value).length === 1 && "focus" in value) return safeText(value.focus, 500);
+  return safeText(value, 500);
 }
 
 function parseModelResponse(value: unknown, profile: HealthProfile, history: GuidanceHistory): ParsedModelResponse {
@@ -240,6 +254,9 @@ function parseModelResponse(value: unknown, profile: HealthProfile, history: Gui
     if (conflictsWithDietaryRestrictions(`${title}. ${text}`, profile.dietaryRestrictions)) {
       continue;
     }
+    if (conflictsWithActivitySchedule(`${title}. ${text}`, profile.weeklyActivityDays)) {
+      continue;
+    }
     items.push({
       id: `deepseek-${items.length + 1}`,
       priority: priority as RecommendationPriority,
@@ -247,8 +264,8 @@ function parseModelResponse(value: unknown, profile: HealthProfile, history: Gui
       text: withGoal(text, profile)
     });
   }
-  const weeklyCandidate = safeText(value.weekly, 500);
-  const monthlyCandidate = safeText(value.monthly, 500);
+  const weeklyCandidate = summaryFocus(value.weekly);
+  const monthlyCandidate = summaryFocus(value.monthly);
   if (items.length === 0) {
     return rejectedModelResponse("Return at least one item without progress claims or restricted foods.");
   }
@@ -371,6 +388,9 @@ async function requestDeepSeekGuidance(
     },
     body: JSON.stringify({
       model: config.model,
+      thinking: { type: "disabled" },
+      top_p: 1,
+      max_tokens: 2000,
       temperature: correction ? 0.1 : 0.2,
       response_format: { type: "json_object" },
       messages: [

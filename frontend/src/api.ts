@@ -50,11 +50,11 @@ export async function saveProfile(profile: ProfileFormValues, privacy: PrivacySe
   return (await response.json()) as SavedProfileResponse;
 }
 
-export async function saveActivity(activeDays: number, recordedAt: string, token: string): Promise<{ history: HealthHistory; recommendations: Guidance | null }> {
+export async function saveActivity(activeDays: number, recordedAtLocal: string, token: string, timezone: string): Promise<{ history: HealthHistory; recommendations: Guidance | null }> {
   const response = await fetch("/api/history/activity", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ activeDays, recordedAt })
+    body: JSON.stringify({ activeDays, recordedAtLocal, timezone })
   });
   if (!response.ok) {
     throw new ApiError(response.status, await readError(response));
@@ -120,6 +120,7 @@ export interface AuthConfig {
   accessTokenMinutes: number;
   refreshTokenDays: number;
   oauthProviders: { google: boolean; github: boolean };
+  onlineAiAvailable: boolean;
 }
 
 export async function getAuthConfig(): Promise<AuthConfig> {

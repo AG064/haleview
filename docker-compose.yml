@@ -1,6 +1,24 @@
-name: numbers-dont-lie
+name: haleview
 
 services:
+  backend-data-init:
+    image: alpine:3.21
+    command: ["sh", "-c", "chown -R 1000:1000 /app/data"]
+    user: "0:0"
+    volumes:
+      - backend_data:/app/data
+    network_mode: none
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+
   backend:
     build:
       context: ./backend
@@ -8,9 +26,12 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 3001
-      DATA_FILE: /app/data/numbers-dont-lie.db
+      DATA_FILE: /app/data/haleview.db
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://127.0.0.1:27450}
-      DEEPSEEK_ENV_FILE: /run/secrets/deepseek_env
+      DEEPSEEK_API_KEY_FILE: ${DEEPSEEK_API_KEY_FILE:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
+      DEEPSEEK_TIMEOUT_MS: ${DEEPSEEK_TIMEOUT_MS:-55000}
       AUTH_JWT_SECRET_FILE: /app/data/jwt-secret
       RESEND_API_KEY_FILE: /app/data/resend.key
       AUTH_EMAIL_FROM: ${AUTH_EMAIL_FROM:-Haleview <onboarding@resend.dev>}
@@ -20,10 +41,11 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET_FILE: /app/data/github-client-secret
       GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-http://127.0.0.1:27451/api/auth/oauth/github/callback}
-    secrets:
-      - deepseek_env
+    depends_on:
+      backend-data-init:
+        condition: service_completed_successfully
     volumes:
-      - ./backend/data:/app/data
+      - backend_data:/app/data
     ports:
       - "127.0.0.1:${BACKEND_HOST_PORT:-27451}:3001"
     init: true
@@ -64,6 +86,5 @@ services:
       retries: 10
       start_period: 5s
 
-secrets:
-  deepseek_env:
-    file: ${DEEPSEEK_ENV_FILE:-./.env.example}
+volumes:
+  backend_data:

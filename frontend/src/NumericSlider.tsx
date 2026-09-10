@@ -7,13 +7,16 @@ interface NumericSliderProps {
   max: number;
   step?: number;
   unit: string;
+  showSlider?: boolean;
   onChange: (value: number) => void;
   onValidityChange?: (error: string | null) => void;
 }
 
-export default function NumericSlider({ label, value, min, max, step = 1, unit, onChange, onValidityChange }: NumericSliderProps) {
+export default function NumericSlider({ label, value, min, max, step = 1, unit, showSlider = true, onChange, onValidityChange }: NumericSliderProps) {
   const labelId = useId();
   const errorId = useId();
+  const inputId = useId();
+  const unitId = useId();
   const [edit, setEdit] = useState({ source: value, draft: String(value) });
   const [fieldError, setFieldError] = useState<string | null>(null);
   const draft = edit.source === value ? edit.draft : String(value);
@@ -48,25 +51,35 @@ export default function NumericSlider({ label, value, min, max, step = 1, unit, 
     setEdit({ source: parsed, draft: String(parsed) });
   };
 
+  const numberInput = <input
+    id={inputId}
+    className={showSlider ? "slider-number-input" : "profile-number-input"}
+    type="number"
+    inputMode={step === 1 ? "numeric" : "decimal"}
+    min={min}
+    max={max}
+    step={step}
+    value={draft}
+    aria-label={`${label} value`}
+    aria-invalid={Boolean(fieldError)}
+    aria-describedby={`${unitId}${fieldError ? ` ${errorId}` : ""}`}
+    onChange={(event) => acceptDraft(event.target.value)}
+    onBlur={finishDraft}
+  />;
+
+  if (!showSlider) return <div className="profile-number-field">
+    <label htmlFor={inputId}>{label}</label>
+    <div className="profile-number-control">{numberInput}<span id={unitId}>{unit}</span></div>
+    {fieldError && <span className="field-error" id={errorId} role="alert">{fieldError}</span>}
+  </div>;
+
   return (
     <div className="slider-field" role="group" aria-labelledby={labelId}>
       <div className="slider-heading">
         <span id={labelId}>{label}</span>
         <span className="slider-value">
-          <input
-            className="slider-number-input"
-            type="number"
-            min={min}
-            max={max}
-            step={step}
-            value={draft}
-            aria-label={`${label} value`}
-            aria-invalid={Boolean(fieldError)}
-            aria-describedby={fieldError ? errorId : undefined}
-            onChange={(event) => acceptDraft(event.target.value)}
-            onBlur={finishDraft}
-          />
-          <span>{unit}</span>
+          {numberInput}
+          <span id={unitId}>{unit}</span>
         </span>
       </div>
       <input
@@ -78,7 +91,7 @@ export default function NumericSlider({ label, value, min, max, step = 1, unit, 
         aria-label={`${label} slider`}
         onChange={(event) => {
           const next = Number(event.target.value);
-          setEdit({ source: next, draft: String(next) });
+          setEdit({ source: next, draft: step < 1 ? next.toFixed(String(step).split(".")[1]?.length ?? 0) : String(next) });
           setFieldError(null);
           onValidityChange?.(null);
           onChange(next);
