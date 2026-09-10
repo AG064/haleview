@@ -38,6 +38,8 @@ import {
 import { beginOAuth, completeOAuth, exchangeOAuthTicket, oauthProviderStatus } from "./oauth.js";
 import { createNutritionRouter } from "./nutrition/routes.js";
 import { exportNutritionData } from "./nutrition/export.js";
+import { createAssistantRouter } from "./assistant/routes.js";
+import { getChatHistory } from "./assistant/store.js";
 const app = express();
 
 app.disable("x-powered-by");
@@ -45,6 +47,7 @@ app.set("trust proxy", 1);
 app.use(express.json({ limit: "32kb" }));
 app.use("/api", apiRateLimit);
 app.use("/api/nutrition", createNutritionRouter());
+app.use("/api/assistant", createAssistantRouter());
 
 app.get("/health", (_request, response) => {
   response.json({ status: "ok", service: "haleview" });
@@ -351,10 +354,14 @@ app.get("/api/profile/export", authMiddleware, (request, response) => {
   response
     .type("application/json")
     .setHeader("Content-Disposition", 'attachment; filename="health-profile.json"')
-    .send(JSON.stringify({ ...exportData(userId), nutrition: exportNutritionData(userId) }, null, 2));
+    .send(JSON.stringify({ ...exportData(userId), nutrition: exportNutritionData(userId), conversations: getChatHistory(userId) }, null, 2));
 });
 
 const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
+  if (error?.type === "entity.too.large") {
+    response.status(413).json({ error: "The request is too large. Send a shorter message." });
+    return;
+  }
   if (error instanceof AuthError) {
     response.status(error.status).json({ error: error.message });
     return;

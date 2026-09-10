@@ -2,11 +2,29 @@
 
 Haleview is a wellness and nutrition planning application.
 
-Haleview uses your saved health profile when creating nutrition settings, so you do not need to enter the same information twice.
+The application uses the health profile from Project 1. It uses saved profile data when it creates nutrition settings. It does not ask for the same data twice.
 
 The current nutrition work includes validated preferences, standard units, backend nutrition calculations, a local catalogue of 558 ingredients and 542 recipes, recipe search, filters, recipe details, local relevance retrieval, meal plans, saved plan versions, shopping lists, intake records, and progress analysis. It is not medical data.
 
 The application is not a medical service. Check health advice before using it.
+
+## Chat with Hale
+
+Open Hale after completing your profile. Ask for current health metrics, saved goals, a daily meal plan, or recorded calorie and macronutrient intake. For example, ask "How are my weight and BMI doing?" and then "What is my target?". The guidance panels remain below the conversation.
+
+Online chat uses the existing DeepSeek configuration and the Online AI consent setting. Without online access, clearly labelled local replies can still retrieve these saved values. The chat does not change profile data or meal plans. Detailed recipe instructions, historical trend conversations, chart generation and response-detail controls are not yet part of chat; use the existing Recipes and Progress pages for those views.
+
+The browser sends only a message and an idempotent request identifier. The authenticated backend loads account-owned history and supplies a structured system prompt. DeepSeek selects from four read-only functions: `get_health_metrics`, `get_health_goals`, `get_meal_plan`, and `get_nutrition_intake`. Parameters are checked before retrieval. Account identity is never accepted from the model. Return objects include only the health or nutrition fields needed for the reply, not account credentials, email, age, date of birth or other users' data.
+
+Tool results are returned to the model using the function call identifiers. Hale's brief introduction is generated from those results, while metric values and meal details are displayed directly from backend-produced sections. Model-generated numbers are rejected rather than used for health calculations. This separates wording from authoritative values. It does not guarantee the accuracy of every qualitative model statement.
+
+The system prompt defines Hale's scope, examples, follow-up behavior, private-data boundaries, response format and medical limitations. Online chat uses the configured model, temperature 0.2, top-p 1 and non-thinking mode, with an output limit of 900 tokens per request. It allows at most two tool rounds, a final answer and one formatting repair within a shared 55-second deadline. Known personal-data queries require a tool call. The existing model choice keeps configuration consistent with nutrition features; tool support is required.
+
+The latest forty conversation turns are encrypted using the application's existing storage protection. The last five turns supply bounded provider context, with per-message limits. Full automatic summarization is not implemented. Provider token totals are stored with each turn for inspection. Close and reopen Hale to continue the saved conversation. Clear chat history removes the current account's stored turns; personal data export also includes chat history.
+
+Empty, oversized and control-character inputs are rejected. Contact details and credential-like text are blocked before storage or provider transmission. Medical concerns and private-account requests receive local boundary responses. Provider failures, malformed output and invalid tool calls produce a visible fallback or missing-data explanation. These checks reduce risk; users should not paste sensitive identifiers into chat.
+
+This project uses the `ai-assistant` Compose project name and ports 28450/28451, separate from the earlier Haleview application. Do not reuse the predecessor's Compose project name or data volume for this project.
 
 ## Recipe data
 
@@ -35,13 +53,13 @@ docker compose up --build
 Open the application at:
 
 ```text
-http://127.0.0.1:27450
+http://127.0.0.1:28450
 ```
 
 Check the backend at:
 
 ```text
-http://127.0.0.1:27451/health
+http://127.0.0.1:28451/health
 ```
 
 Stop the application:
@@ -76,7 +94,7 @@ Haleview uses selected icons from [Lucide](https://lucide.dev). The React packag
 
 ## Meal planning
 
-Sign in to save a daily or seven-day plan. Haleview uses the saved health
+Sign in to save a daily or seven-day plan. Haleview uses the saved Project 1
 profile and nutrition preferences. Each plan shows meal type, time, recipe,
 servings, and calculated nutrition. Each meal and day also shows its backend-calculated share of the saved daily calorie and macronutrient targets.
 

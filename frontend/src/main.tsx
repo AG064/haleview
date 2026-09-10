@@ -24,6 +24,7 @@ import "./styles/app-design.css";
 import "./styles/component-system.css";
 import "./styles/motion.css";
 import "./styles/waiting.css";
+import "./styles/hale-chat.css";
 
 applyTheme(readTheme());
 

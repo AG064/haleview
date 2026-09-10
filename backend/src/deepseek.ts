@@ -67,7 +67,7 @@ function loadLocalEnv(): void {
 
 loadLocalEnv();
 
-function getConfig(): DeepSeekConfig | null {
+export function getDeepSeekConfig(): DeepSeekConfig | null {
   const keyFile = process.env.DEEPSEEK_API_KEY_FILE?.trim();
   let apiKey = process.env.DEEPSEEK_API_KEY?.trim() ?? "";
   if (keyFile) {
@@ -91,7 +91,7 @@ function getConfig(): DeepSeekConfig | null {
 }
 
 export function deepSeekConfigStatus(): { configured: boolean; baseUrl: string | null; modelConfigured: boolean } {
-  const config = getConfig();
+  const config = getDeepSeekConfig();
   return {
     configured: config !== null,
     baseUrl: config?.baseUrl ?? null,
@@ -437,7 +437,7 @@ async function requestDeepSeekGuidance(
 }
 
 export async function generateDeepSeekGuidance(profile: HealthProfile, history: GuidanceHistory): Promise<Guidance> {
-  const config = getConfig();
+  const config = getDeepSeekConfig();
   if (!config) {
     throw new DeepSeekGenerationError(
       "not_configured",

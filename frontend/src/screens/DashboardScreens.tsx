@@ -7,6 +7,7 @@ import TwoFactorQr from "../TwoFactorQr";
 import { labels } from "../app-data";
 import { ApiError } from "../api";
 import { GuidanceMeta, PrimaryGuidance } from "../components/HaleGuidance";
+import { HaleChat } from "../components/HaleChat";
 import { AppAccordion } from "../components/AppAccordion";
 import { asNumber, displayDate, sentenceLabel } from "../format";
 import { guidanceContext, withoutGoalPrefix } from "../hale-guidance";
@@ -437,7 +438,7 @@ export function HaleScreen({ guidance, allowOnlineAi, recommendationRefreshing, 
   const nutritionAdvice = nutritionReview ?? nutrition?.summary;
 
   return (
-    <section className="panel guidance-panel hale-page" aria-labelledby="hale-page-title">
+    <><HaleChat request={request} /><section className="panel guidance-panel hale-page" aria-labelledby="hale-page-title">
       <div className="panel-heading hale-page-heading">
         <div className="hale-page-title">
           <span className="hale-page-icon"><HeartPulse aria-hidden="true" /></span>
@@ -493,7 +494,7 @@ export function HaleScreen({ guidance, allowOnlineAi, recommendationRefreshing, 
           })}
         </div>
       </div>}
-    </section>
+    </section></>
   );
 }
 
