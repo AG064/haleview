@@ -1,3 +1,4 @@
+import { dataFilePath } from "./runtime-path.js";
 import {
   createHmac,
   createHash,
@@ -28,7 +29,7 @@ function loadJwtSecret(): string {
     }
     return configured;
   }
-  const dataFile = resolve(process.env.DATA_FILE ?? "./data/numbers-dont-lie.db");
+  const dataFile = dataFilePath();
   const secretFile = resolve(process.env.AUTH_JWT_SECRET_FILE?.trim() || `${dataFile}.jwt-key`);
   try {
     const existing = readFileSync(secretFile, "utf8").trim();

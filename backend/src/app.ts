@@ -1,3 +1,5 @@
+import { defaultTimezone, localDateTimeToIso, TimezoneValidationError } from "./timezone.js";
+import { getNutritionPreferences } from "./nutrition/storage.js";
 import express, { type ErrorRequestHandler, type Response } from "express";
 import {
   AuthError,
@@ -19,7 +21,7 @@ import {
 import { ProfileValidationError } from "./profile.js";
 import { GuestDuplicateActivityError, GuestValidationError, saveGuestActivity, saveGuestProfile } from "./guest.js";
 import { apiRateLimit } from "./rate-limit.js";
-import { DeepSeekGenerationError, generateDeepSeekGuidance } from "./deepseek.js";
+import { DeepSeekGenerationError, deepSeekConfigStatus, generateDeepSeekGuidance } from "./deepseek.js";
 import {
   addActivity,
   DuplicateActivityError,
@@ -34,15 +36,18 @@ import {
 } from "./storage.js";
 
 import { beginOAuth, completeOAuth, exchangeOAuthTicket, oauthProviderStatus } from "./oauth.js";
+import { createNutritionRouter } from "./nutrition/routes.js";
+import { exportNutritionData } from "./nutrition/export.js";
 const app = express();
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "32kb" }));
 app.use("/api", apiRateLimit);
+app.use("/api/nutrition", createNutritionRouter());
 
 app.get("/health", (_request, response) => {
-  response.json({ status: "ok", service: "numbers-dont-lie" });
+  response.json({ status: "ok", service: "haleview" });
 });
 
 function sendAuthError(error: unknown, response: Response): void {
@@ -218,7 +223,11 @@ app.post("/api/auth/oauth/exchange", (request, response) => {
   }
 });
 app.get("/api/auth/config", (_request, response) => {
-  response.json({ ...authConfig(), oauthProviders: oauthProviderStatus() });
+  response.json({
+    ...authConfig(),
+    oauthProviders: oauthProviderStatus(),
+    onlineAiAvailable: deepSeekConfigStatus().configured
+  });
 });
 
 app.get("/api/auth/dev/outbox/latest", (_request, response) => {
@@ -283,9 +292,17 @@ app.put("/api/profile", authMiddleware, (request, response) => {
 app.post("/api/history/activity", authMiddleware, (request, response) => {
   try {
     const userId = authUserId(request);
-    response.status(201).json({ history: addActivity(request.body, userId), recommendations: getRecommendations(userId) });
+    const timezone = getNutritionPreferences(userId)?.timezone ?? defaultTimezone();
+    const body = { ...request.body };
+    if (body.recordedAtLocal !== undefined) {
+      if (body.timezone !== undefined && body.timezone !== timezone) {
+        throw new TimezoneValidationError("The saved timezone changed. Reload the activity form before saving.");
+      }
+      body.recordedAt = localDateTimeToIso(body.recordedAtLocal, timezone);
+    }
+    response.status(201).json({ history: addActivity(body, userId), recommendations: getRecommendations(userId) });
   } catch (error) {
-    if (error instanceof HistoryValidationError) {
+    if (error instanceof HistoryValidationError || error instanceof TimezoneValidationError) {
       response.status(400).json({ error: error.message });
       return;
     }
@@ -330,10 +347,11 @@ app.post("/api/recommendations/refresh", authMiddleware, async (request, respons
 });
 
 app.get("/api/profile/export", authMiddleware, (request, response) => {
+  const userId = authUserId(request);
   response
     .type("application/json")
     .setHeader("Content-Disposition", 'attachment; filename="health-profile.json"')
-    .send(JSON.stringify(exportData(authUserId(request)), null, 2));
+    .send(JSON.stringify({ ...exportData(userId), nutrition: exportNutritionData(userId) }, null, 2));
 });
 
 const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {

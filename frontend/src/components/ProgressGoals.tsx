@@ -1,3 +1,6 @@
+import { Target } from "lucide-react";
+import { AppAccordion } from "./AppAccordion";
+
 interface GoalTrackingProps {
   weightProgress: number;
   targetDistance: number | null;
@@ -53,11 +56,7 @@ export function ProgressGoals(props: GoalTrackingProps) {
   const monthlyWeeklyAverage = props.monthlyActivityDays / 30 * 7;
 
   return (
-    <section className="panel goal-tracking-panel">
-      <div className="panel-heading">
-        <div><p className="eyebrow">Goals</p><h3>Goal tracking</h3></div>
-        <span className="required-note">Three current measures</span>
-      </div>
+    <AppAccordion className="goal-tracking-panel" title="Your goals" eyebrow="Goal tracking" meta="3 goals" icon={Target} tone="oat">
       <div className="goal-card-grid">
         <GoalCard
           title="Weight target"
@@ -88,6 +87,6 @@ export function ProgressGoals(props: GoalTrackingProps) {
           <ComparisonBar label="30-day weekly average" value={monthlyWeeklyAverage} />
         </div>
       </div>
-    </section>
+    </AppAccordion>
   );
 }

@@ -3,9 +3,11 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
-COPY tsconfig.json ./
+COPY tsconfig.json eslint.config.js ./
 COPY src ./src
-RUN npm run build
+COPY scripts ./scripts
+COPY tests ./tests
+RUN npm run lint && npm test
 
 FROM node:22-alpine AS runtime
 

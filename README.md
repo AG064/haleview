@@ -1,242 +1,311 @@
 # Haleview
 
-Haleview records a health profile and shows simple progress data. It calculates BMI, a wellness score, goal progress, and local guidance. The Hale assistant can also use DeepSeek when the user allows online AI.
+Haleview is a wellness and nutrition planning application.
 
-Haleview is not a medical service. Check health guidance before acting on it.
+Haleview uses your saved health profile when creating nutrition settings, so you do not need to enter the same information twice.
 
-## Start with Docker
+The current nutrition work includes validated preferences, standard units, backend nutrition calculations, a local catalogue of 558 ingredients and 542 recipes, recipe search, filters, recipe details, local relevance retrieval, meal plans, saved plan versions, shopping lists, intake records, and progress analysis. It is not medical data.
 
-Docker is the only required setup dependency.
+The application is not a medical service. Check health advice before using it.
+
+## Recipe data
+
+The landing-page lifestyle photo is by [olia danilevich on Pexels](https://www.pexels.com/photo/a-person-making-salad-9004734/), used under the [Pexels licence](https://www.pexels.com/license/). It illustrates everyday food preparation and is not a catalogue recipe photo.
+
+The catalogue includes 522 public-domain records from the Open Recipe Archive and 20 original Haleview everyday meal templates. The templates are labelled separately and have not been kitchen-tested. Their ingredient amounts are explicit and nutrition is calculated from USDA records. Automatic plans use the meal-ready templates; the historical archive remains available for browsing. Recipes with uncertain consumption quantities, such as preserving brine, are excluded from planning and display a warning.
+
+Ingredient nutrition data comes from USDA FoodData Central Foundation Foods and SR Legacy records. Haleview calculates recipe nutrition from the stored gram and millilitre quantities. Olive oil is currently weighed in grams because its source record is mass-based. No unsourced density conversion is applied; this is an exception to the usual millilitre convention for liquids.
+
+The source archive does not give a reliable serving or yield value. Haleview stores each imported recipe as one recipe unit. It does not divide nutrition by a guessed serving count.
+
+These are historical recipes. This project has not kitchen-tested them.
+
+Recipe photos come from Wikimedia Commons. They show serving examples of similar dishes, not results from these exact archive recipes. Photos are selected by dish, ingredients, and preparation, not by title alone. Each photo keeps its creator, file page, and licence with the recipe. Cards and recipe pages link this credit. Photos are displayed with a crop to fit the layout.
+
+When no suitable dish photo is available, the recipe uses a compact text card. Failed image loads also hide the photo area. All photos are local and work without an image service or AI key.
+
+## Start the application
+
+Docker is the only required setup tool.
 
 ```text
 docker compose up --build
 ```
 
-Open `http://127.0.0.1:27450`.
+Open the application at:
 
-The backend health check is at `http://127.0.0.1:27451/health`.
+```text
+http://127.0.0.1:27450
+```
 
-To stop the app:
+Check the backend at:
+
+```text
+http://127.0.0.1:27451/health
+```
+
+Stop the application:
 
 ```text
 docker compose down
 ```
 
-## Configuration
+Docker stores the local database in a named volume. The database is not stored in the source folder.
 
-Copy `.env.example` to `.env`. Keep `.env` and all secret files outside Git.
+When running the backend without Docker, data is stored in `.haleview` under the user's home directory. Set `DATA_FILE` to an external database path to use an existing database. Keep its encryption and signing key files with it.
 
-### DeepSeek
+## Optional online AI
 
-Online AI is optional. The app works without it.
+The application can run without an AI key. Local generation is used when online AI is not configured.
 
-Set `DEEPSEEK_API_KEY` in the ignored `.env` file. Docker mounts that file as a runtime secret. The key is read by the backend. It is not placed in frontend code, exports, logs, or Docker image metadata.
+Keep all keys and environment files outside this repository. Store the DeepSeek key in a file that only the backend can read. Set `DEEPSEEK_API_KEY_FILE` in an external environment file to the path of that key file inside the backend container. Pass the external environment file to Compose when the application starts.
 
-These values can also be changed in `.env`:
+Do not put the key in the Compose environment or in this repository. The backend reads the key file when it needs the provider. Set `DEEPSEEK_MODEL` in the external environment file when a different model is required. The Compose file supplies a default model name when this value is not set.
 
-- `DEEPSEEK_BASE_URL`
-- `DEEPSEEK_MODEL`
-- `DEEPSEEK_TIMEOUT_MS`
+The application shows whether Online AI is available. The key is not placed in frontend code, prompts, logs, or saved meal data.
 
-For a backend process outside Docker, use `DEEPSEEK_API_KEY_FILE` to point to a secret file.
+## First setup and guide
 
-### Email
+Haleview keeps the main pages locked until the profile is complete. The Profile page and Guide stay available. Profile entries remain as a draft while the person moves through the setup steps. Haleview saves the complete profile only after Data use is confirmed on the final step.
 
-For local Docker use without an email provider, the registration and password reset pages show a one-time link. This works only when `PUBLIC_APP_URL` is a loopback address. A public deployment never shows account links in an API response.
+The Guide contains ten short tasks. Each task opens the related page when that page is available. The Dashboard contains a short daily summary. Detailed nutrition and progress views have their own pages.
 
-To send email with Resend, place the key in `backend/data/resend.key`. Set `AUTH_EMAIL_FROM` only when the sender is allowed by Resend. The Resend test sender can send to the Resend account address without a domain.
+## Interface icons
 
-If a configured email provider rejects a verification message, account creation stops with a clear error and can be tried again.
+Haleview uses selected icons from [Lucide](https://lucide.dev). The React package renders each selected icon as an inline SVG. Lucide is available under the [ISC License](https://lucide.dev/license).
 
-### Google and GitHub
+## Meal planning
 
-Set the public client IDs in `.env`:
+Sign in to save a daily or seven-day plan. Haleview uses the saved health
+profile and nutrition preferences. Each plan shows meal type, time, recipe,
+servings, and calculated nutrition. Each meal and day also shows its backend-calculated share of the saved daily calorie and macronutrient targets.
 
-- `GOOGLE_CLIENT_ID`
-- `GITHUB_CLIENT_ID`
+Meals can be swapped, moved to another day, changed to another meal type,
+regenerated, or entered manually. Each saved change creates a plan version.
+Earlier versions can be restored without changing profile data.
 
-Place the private client secrets in these ignored files:
+Shopping lists can be made from a whole plan or a single planned meal. Items
+are grouped and use grams or millilitres. Checked items, quantity changes, and
+removals are saved to the account.
 
-- `backend/data/google-client-secret`
-- `backend/data/github-client-secret`
+## Nutrition progress
 
-Set the redirect addresses in `.env` when the public app address changes. The local defaults are listed in `.env.example`.
+Signed-in users can record a planned meal or enter calories and macros by hand.
+Each record stays with its account. A user cannot read or remove another user's
+intake records.
 
-### Storage keys
+Haleview compares daily, seven-day, and thirty-day totals with saved targets.
+The backend calculates calories, macros, micronutrients, and trend points. The
+same input gives the same result. The frontend only displays these values.
+The detailed view compares 7-day and 30-day daily calorie averages with the
+saved target. Days without records count as zero in these averages.
+The progress page has a colour-coded calorie progress bar and a macro chart.
+It also compares six micronutrients and fibre with general adult Daily Values. Sodium
+uses an upper limit. Other tracked nutrients use a daily reference. These
+values are for display and do not diagnose a health condition. The reference
+values come from the [FDA Daily Value guide](https://www.fda.gov/food/nutrition-facts-label/daily-value-nutrition-and-supplement-facts-labels).
+Low-intake guidance links the user to catalogue recipes that still follow the
+saved diet, allergy, and disliked-ingredient settings. Recipe search has
+micronutrient filters. Recipe pages also show a macro chart for the selected
+recipe amount.
 
-SQLite health records and account email addresses are protected with AES-256-GCM. Email searches use a keyed lookup hash, so the database does not need a readable email address. A development encryption key is created in the ignored backend data folder when no key is supplied. Keep the encryption key and database together in backups.
+Nutrition settings start with values calculated from the saved health profile.
+The user can then change diet choices, allergies, disliked ingredients,
+cuisines, targets, meal counts, meal times, and timezone. Haleview keeps the
+health profile as the source for age, height, weight, goal, and activity.
 
-The JWT signing key is also stored in the ignored backend data folder. Keeping it preserves active sessions after a normal restart.
+The nutrition score changes the wellness score after a meal is recorded. The
+saved health score supplies 75 percent of the result. The nutrition score
+supplies 25 percent. If there is no intake for the current day, the saved health
+score does not change.
 
-## Access modes
+The progress summary is calculated locally so Dashboard and Nutrition load without
+waiting for an online provider. Online guidance is requested separately from Hale.
+Feedback on recipes and
+suggestions is stored with the account. Recipe ratings change later retrieval
+priority. Highly rated recipes can receive a verified label. Review text passes
+a basic moderation check before it contributes to community results. Saved
+nutrition settings keep a short change history. Frequent choices from that
+history also affect later recipe retrieval.
 
-The first page explains the app and offers account access.
+## Community feedback
 
-- Account mode stores data in the local SQLite database. It supports email and password, email verification, password reset, Google, GitHub, and optional two-step sign-in.
-- Guest mode stores the profile and history in this browser. Clearing browser storage removes guest data.
-- A guest profile can be carried into profile setup after sign-in.
+Signed-in users can leave one-to-five-star ratings and review text. Each account has one current vote per recipe. Approved community ratings increase retrieval priority, while personal likes and dislikes also influence the query and ranking used by vector search. The hash-vector encoding is fixed; feedback changes retrieval and its stored ranking signals, rather than retraining an embedding model.
 
-Two-step sign-in shows a QR code for an authenticator app. The browser generates the QR code locally. The setup URI is not sent to a QR service. A manual setup key is shown as a fallback. An account can disable two-step sign-in in Settings by entering the current authenticator code.
+A recipe receives the community-verified label after at least three ratings, an average of at least four stars, and a helpful ratio of at least two thirds. That status adds a retrieval boost and is shown on recipe cards and details. It does not mean the recipe was kitchen-tested.
 
-Access tokens last 15 minutes. An active page refreshes the session before expiry. The page signs out after 15 minutes without keyboard or pointer activity. Refresh tokens last 30 days and rotate when used.
+Moderation is automated: contact details are rejected, and control characters or repeated-character spam receive a stored rejected status and reason. Only approved feedback contributes to community ranking or verification. There is no human moderation console.
 
-## Tutorial
+## Guest visits
 
-The tutorial opens once for a new account or a new guest with no saved profile. It explains access, profile setup, the dashboard, progress records, and Hale.
+Guest mode keeps profile, privacy choices and activity only in page memory. Reloading or leaving the visit clears them. Previous guest snapshots are removed when starting a guest visit. Guest values are not copied into account setup. Online AI, email notifications and public sharing require an account. Guest computation endpoints return results without storing account records.
 
-The tutorial is optional:
+## Usage guide
 
-- Select `Skip tutorial` to go to profile setup.
-- Select `Tutorial` in profile setup to open it again.
-- Select `Settings`, then `Tutorial`, to replay it later.
+1. Create an account or sign in.
+2. Complete Profile. Confirm Data use on the final step to save the profile.
+3. Open Nutrition and confirm the pre-filled food preferences and targets.
+4. Open Recipes to search the public-domain catalogue. The browser groups versions with the same base recipe name, ignoring trailing version numbers and parenthetical subtitles. View variations opens every matching version in a group. Counts show recipes and groups. Use the numbered pages or Previous and Next to move through groups while preserving your filters. Change the recipe amount to recalculate ingredient quantities and nutrition.
+5. Use Create a recipe variation to retrieve a matching source recipe and make a grounded variation. Open a recipe and use Find swap to replace one ingredient with a safe catalogue alternative.
+6. Rate a source recipe. Later searches use approved community ratings, personal feedback, and preference history.
+7. Open Meal plan to create a day or week. Change meals, move them, add a manual meal, or restore an earlier plan version.
+8. Create a shopping list from a plan or one meal. Adjust or remove items as needed.
+9. Record eaten meals in Nutrition. Use Dashboard for today and Progress for weekly and monthly results.
 
-The browser stores only a tutorial-seen flag for this feature. It does not store health data in that flag.
+### Create with Hale
 
-## Main use
+In Recipes, open Create. Describe a dish in your own words, or choose Combine and select two or three source recipes. Set 1 to 12 servings and a cooking time. Hale composes a new ingredient list and preparation method using catalogue foods. Describe works best when you name ingredients and say how you want to cook them. Combine lets you specify which parts of each source you want to bring together.
 
-1. Choose account access or guest mode.
-2. Follow the tutorial or skip it.
-3. Complete the four profile steps.
-4. Confirm data use.
-5. Leave online AI off, or allow it for Hale.
-6. Save the profile.
-7. Read the dashboard.
-8. Add activity records in `Records`.
-9. Review changes in `Progress`.
-10. Open `Hale` for guidance.
+Create requires a signed-in account, consent for recommendations, Online AI and a configured provider. It does not silently substitute a local recipe when generation fails. Browsing and local recipe variations remain available without AI. The catalogue is finite; an unavailable requested ingredient can prevent creation. Ingredient weights must match their catalogue cooking state. Creation rejects cooked-rice quantities paired with dry-rice nutrition and methods that discard an unknown amount of salted cooking liquid or fat. Older saved creations with these problems show a warning and cannot be added to a new plan; recreate them with a compatible ingredient or cooking method.
 
-The number controls support both methods:
+Review the result, adjust servings and choose Save recipe to keep it in My saved recipes. Add to a plan copies the recipe, ingredients and calculated nutrition into the selected day. Plan versions and shopping lists retain that copy even if you remove the saved recipe. A collection can hold 100 saved recipes. The latest 20 unsaved drafts are retained. Private creations are encrypted at rest, isolated by account and included in the personal data export.
 
-- Drag the slider.
-- Select the number and type a value.
+My saved recipes is a separate tab on the Recipes page. Favourites holds up to 200 bookmarked catalogue recipes or saved creations. Open a recipe to add or remove its bookmark. Removing a favourite keeps the saved recipe. Removing a saved creation also removes its bookmark. Favourites are private to each account and included in data export.
 
-Invalid values show a message before the profile is saved.
+Created recipes are AI suggestions and have not been kitchen-tested. Nutrition is calculated from catalogue ingredient quantities for all selected servings. It is not a measured laboratory result.
 
-## Pages
+## Prompt and model strategy
 
-| Address | Purpose |
-| --- | --- |
-| `/` | App overview |
-| `/access` | Account and guest access |
-| `/tutorial` | Optional tutorial |
-| `/profile/setup` | Profile setup and editing |
-| `/profile` | Saved profile |
-| `/dashboard` | Main health overview |
-| `/dashboard/progress` | Trends, goals, and comparisons |
-| `/dashboard/records` | Weight and activity history |
-| `/dashboard/hale` | Hale guidance |
-| `/settings` | Data, tutorial, AI, and account settings |
+Meal generation uses five small steps:
 
-Unknown frontend addresses show a 404 page. Missing static files return HTTP 404.
+1. Assess the saved health targets and food restrictions.
+2. Create meal types and times.
+3. Select recipes or grounded variations from local retrieval results.
+4. Review values from backend nutrition functions.
+5. Correct reported gaps while keeping saved restrictions.
 
-## Profile data
+Each step receives the checked result from the prior step and the saved targets, restrictions, and schedule. Each planning prompt has a short example that shows its required JSON shape, a common constraint, and standard units. Temperature varies by task; top-p stays at 1.
 
-The profile can include:
+| Task | Temperature | Maximum output tokens |
+| --- | --- | --- |
+| Profile assessment | 0.1 | 1200 |
+| Meal structure | 0.2 | 1600 |
+| Recipe selection | 0.5 | 2000 |
+| Nutrition review | 0.1 | 1200 |
+| Plan correction | 0.2 | 1600 |
+| Ingredient substitution | 0.1 | 900 |
+| Recipe variation | 0.4 | 900 |
+| Interpret recipe idea | 0.1 | 1200 |
+| Create recipe | 0.65 | 3000 |
+| Review created recipe | 0.1 | 1200 |
+| Nutrition suggestion review | 0.2 | 500 |
+| Hale guidance | 0.2, or 0.1 on a repair request | 2000 |
 
-- Age and gender.
-- Height, current weight, and target weight.
-- Occupation type and activity level.
-- Fitness goal and planned active days.
-- Dietary preferences and restrictions.
-- Exercise types, session duration, fitness level, place, and time.
-- Endurance, pushups, and squats.
-- Data-use consent, online AI choice, visibility, and email choice.
+Structured requests and Hale guidance disable DeepSeek thinking mode to keep responses within their output limits. Tool-only responses are accepted after validation. Truncated or malformed responses use the local recovery path.
 
-Kilograms and centimetres are used before storage, calculations, charts, and AI processing. Standard units keep comparisons and chart scales consistent.
+The backend decides which targets are missed. A bounded search adjusts recipe amounts or selects another permitted recipe, accepts only a lower combined target error, and recalculates the result. This runs for every generated day. If available recipes cannot meet all targets, the plan shows the remaining gaps and excesses.
 
-## Calculations
+Allergies, disliked ingredients, and restrictive diets filter eligible recipes. Mediterranean and flexitarian choices guide ranking alongside cuisine preferences. When the catalogue cannot verify a restrictive choice, Haleview reports that no matching recipe is available instead of ignoring it.
 
-Haleview calculates:
+Recipe variations and ingredient substitutions have separate prompts and output contracts. Changing the amount of a generated recipe preserves its selected ingredients and substitutions and calls the backend calculator again.
 
-- BMI and the underweight, normal weight, overweight, or obese class.
-- A wellness score from 0 to 100.
-- Weight, activity, goal, and habit progress.
-- Current and target comparisons.
-- Weekly and monthly summaries.
-- Milestones and activity streaks.
+Create first uses DeepSeek to match explicitly requested foods to available catalogue ingredients. It then composes the recipe and separately critiques the result. The critique checks the request, ingredients and cooking method; one revision is allowed. The three Create prompts specify their output schemas. Source recipes and ingredient records provide context instead of a fixed example dish that could steer unrelated requests. Backend validation checks catalogue identifiers, units, quantities, restrictions, ingredient references and known food names in recipe text. The model cannot supply authoritative nutrition. Preparation avoids fixed ingredient amounts so serving changes remain consistent. These checks reduce errors but cannot prove culinary quality or the safety of every generated instruction.
 
-The wellness score uses four normalized parts:
+The configured DeepSeek model handles both recipe composition and nutritional analysis. Using one provider keeps authentication, response validation, and recovery consistent. Recipe composition uses temperature 0.65 to allow different dishes, while nutritional analysis uses 0.2 to prioritize suggestions from calculated facts. The model is configured with DEEPSEEK_MODEL; the default is deepseek-v4-flash.
 
-```text
-score = (bmi_score * 0.3)
-      + (activity_score * 0.3)
-      + (goal_progress * 0.2)
-      + (habits_score * 0.2)
-```
+DeepSeek is used for structured assessment, selection, substitution ranking, and guidance. It supports the JSON output and function calls used by this application. The local catalogue remains the recipe and ingredient source. Provider output cannot add unknown recipe or ingredient identifiers. Backend functions remain the only source for displayed nutrition values and target comparisons.
 
-BMI and activity each have a 30 percent effect. Goal progress and habits each have a 20 percent effect. Saving a changed profile recalculates the result.
+Hale shows nutrition insights beside health guidance. The optional online nutrition review selects practical suggestions from the calculated local review. It cannot replace calorie comparisons or introduce unverified foods. This action respects the account's consent and Online AI setting.
 
-## Hale and online AI
+## Data and recovery
 
-Local guidance is always available. Online AI is off by default.
+Data export in Settings includes the account's health history, nutrition
+preferences and history, plans and versions, shopping lists, intake, and feedback.
+It does not include sign-in tokens or provider keys.
 
-When online AI is off:
+Only the health fields needed for planning are sent to the provider. Names, email addresses, account IDs, and access data are not included.
 
-- Guidance is calculated locally.
-- The page shows `Local guidance`.
-- No request is sent to DeepSeek.
+Provider JSON and function arguments are checked before use. Only the listed nutrition functions can run. Recipe selections must use IDs from the local retrieval result. Nutrition calls must match the selected recipes and serving sizes.
 
-When the user allows online AI:
+The backend handles timeouts, rate limits, connection errors, rejected requests, and malformed responses with stable error codes. A matching cached result is used first. If none is available, the backend creates a local result from the same saved preferences and catalogue.
 
-- The backend may send age, body measures, activity, goals, preferences, restrictions, and recent records to DeepSeek.
-- Names and email addresses are not sent.
-- The page shows `AI generated by DeepSeek` when DeepSeek produced the result.
-- The user can select `Generate with AI` on the Hale page.
+## Main areas
 
-Removing names and email reduces personal context without removing the health values needed for general guidance. The backend uses a fixed JSON response shape. It rejects invalid items and removes advice that conflicts with a listed dietary restriction. It does not request a diagnosis.
+- Access: account access and guest access.
+- Profile: health data, goals, activity, and food preferences.
+- Dashboard: today's health, meal, and activity summary.
+- Hale: health guidance and optional AI nutrition review, accessible from the main navigation.
+- Records: weight and activity records.
+- Progress: health changes over time.
+- Nutrition: intake, current targets, trends, micronutrients, and feedback.
+- Recipes: catalogue search, filters, generated creations, My saved recipes, Favourites, ingredient substitutions, community ratings, recipe details, serving changes, source links, and calculated nutrition values.
+- Meal plan: daily or seven-day plans, meal changes, manual meals, and version restore.
+- Shopping list: grouped ingredients with saved quantity changes and removals.
 
-If the first DeepSeek response does not match the required shape or safety rules, the backend sends one correction request. Authentication, rate-limit, network, and timeout errors are not retried.
+The recipe catalogue and grounded variation flow work without an AI key. A variation starts from a retrieved Open Recipe Archive record and uses only mapped catalogue ingredients. Optional online ranking can select from those allowed records. Haleview does not accept invented ingredients or model-provided nutrition values.
 
-The prompt is zero-shot. It gives the model the required fields, limits, and output schema without example answers. This keeps the request short. Few-shot examples can improve format consistency, but they use more context and can bias the answer.
+## Units and dates
 
-The request includes at most 12 recent records. A longer history may show more patterns, but it also adds noise and uses more model context. Missing targets use a clear null value. Haleview does not invent missing measurements or progress.
+The data model uses these units:
 
-The backend rejects unsupported history claims and builds progress facts from saved records. Weekly and monthly summaries include the calculated wellness score, goal progress, activity, and weight trend. DeepSeek can add a short focus statement, but it cannot replace those calculated facts.
+- Solids: grams.
+- Liquids: millilitres.
+- Energy: kilocalories.
+- Time: minutes.
 
-The latest accepted guidance is cached. The last 50 guidance versions are stored with timestamps and included in a personal data export. A refresh asks for a new result. If DeepSeek fails, times out, reaches a limit, or returns no safe items, the backend uses the latest saved result or local guidance. Provider output can still be wrong. Users must review it before use.
+Dates and times use ISO 8601. The user timezone is saved with nutrition settings.
+New plans retain that timezone and each meal's ISO scheduled instant alongside its local date and time. Account activity entries use the saved timezone rather than the browser timezone. Nonexistent daylight-saving times are rejected; repeated times use the earlier occurrence. Older saved plans remain readable, and an old nonexistent local time is marked for correction.
 
-DeepSeek is the one external model. It is used for short, structured guidance. The configured timeout is 55 seconds because generation is a separate user action and must not block profile storage.
+Recipe and ingredient text use deterministic 48-dimensional hash vectors. Recipe ranking combines cosine similarity with text matches and permitted personalization signals. Ingredient ranking also uses cosine similarity, with exact-name and word-match priority. At least one text match is required so vector collisions alone cannot turn an unavailable ingredient into a result.
 
-## Dashboard
+## Data model
 
-The dashboard and its tabs show:
+Recipe records contain `id`, `title`, `cuisine`, `meal`, `servings`, `ingredients`, `summary`, `time`, `difficulty_level`, `dietary_tags`, `source`, `img`, optional `imageCredit`, and `preparation`. Every recipe ingredient contains `id`, `name`, `quantity`, and `unit`. Every preparation step contains `step`, `description`, and `ingredients`.
 
-- BMI class and healthy-range comparison.
-- Wellness score and component values.
-- Goal progress, current values, and target values.
-- Weight history and wellness component history.
-- Weekly activity records and activity completion.
-- Weight, activity, and habit goals with milestones, status, and review dates.
-- Weekly activity compared with the 30-day weekly average.
-- Milestones and streaks.
-- Weekly and monthly summaries.
-- High, medium, and low guidance priorities.
+Ingredient records contain `id`, `label`, `unit`, `quantity`, `category`, `allergens`, `dietaryTags`, `aliases`, and `nutrition`. Nutrition contains `caloriesKcal`, `proteinG`, `carbsG`, `fatsG`, `fiberG`, `sugarG`, `sodiumMg`, `vitaminDMcg`, `vitaminB12Mcg`, `ironMg`, `calciumMg`, and `magnesiumMg`.
+The required canonical names `nutrition.calories`, `carbs`, `protein`, and `fats` are also stored and returned. They match `caloriesKcal`, `carbsG`, `proteinG`, and `fatsG`; catalogue validation rejects conflicting values.
 
-Charts use browser canvas, HTML, and CSS. The wellness gauge uses the required score-range gradient. The history chart uses solid areas for BMI, activity, goal, and habit contributions. No chart service receives health data. Canvas redraws only when its data or size changes.
+Nutrition preferences contain diet choices, allergies, disliked ingredients, cuisine choices, calorie and macro targets, meal and snack counts, meal times, timezone, and `effectiveFrom`. The backend stores the current version and up to 50 earlier versions per account.
 
-The frontend separates screens and reusable health visuals from the application controller. The backend separates profile, history, authentication, OAuth, email, and recommendation work by module.
+Meal plans contain an identifier, duration, ISO start and end dates, timezone, source, generation step names, days, meals, daily nutrition and review, and plan totals. Each meal has local date/time and an ISO `scheduledAt` value. Calculated plan insights contain a balance score, diversity index, micronutrient coverage, protein consistency, fibre trend, and sugar trend. Each saved edit creates a version. Shopping lists contain grouped catalogue items with quantities and checked state. Intake records contain an ISO date and time, source, meal details, and calculated nutrition.
+
+Community records contain a recipe subject, one to five stars, helpful state, decision, optional review, moderation state, and ISO creation time. Community aggregates contain rating count, average stars, helpful counts, a rank score, and verified state.
+
+## Bonus functions
+
+- Tracked micronutrients are sodium, vitamin D, vitamin B12, iron, calcium, and magnesium. Fibre is tracked alongside them.
+- Micronutrient progress has reference bars, low-intake guidance, safe recipe suggestions, and recipe search filters.
+- Community RAG uses ratings, reviews, moderation state, verified labels, preference history, and personal feedback in retrieval ranking.
+- Recipe results include calculated nutrient density, satiety, and ingredient diversity. Meal plans include calculated balance, diversity, micronutrient coverage, and trend fields. These fields use catalogue nutrition. They do not make glycaemic, antioxidant, or environmental claims.
+- Account data is isolated, protected at rest, and excluded from prompts unless the user has confirmed recommendation data use.
 
 ## Code layout
 
-- `frontend/src/App.tsx` controls session state, saved data, and page routing.
-- `frontend/src/screens` contains complete pages and page sections.
-- `frontend/src/components` contains shared navigation and health visuals.
-- `frontend/src/styles` contains foundation, entry, app, health, page, and responsive rules.
-- `backend/src/app.ts` defines the HTTP routes.
-- Other backend modules handle one subject, such as authentication, storage, profiles, email, or guidance.
+- `frontend/src/App.tsx` controls the current session and page flow.
+- `frontend/src/screens` contains page screens.
+- `frontend/src/components` contains shared page parts and health visuals.
+- `frontend/src/styles` contains the visual styles.
+- `backend/src/app.ts` defines HTTP routes.
+- `backend/src` contains account, profile, storage, guidance, and nutrition code.
+- `docker-compose.yml` starts the frontend and backend.
 
-Run these commands in both `frontend` and `backend` after a code change:
+## Development checks
+
+The default Docker build runs lint, tests, and compilation before creating the runtime images:
 
 ```text
+docker compose up --build
+```
+
+To run only the checks without starting the application:
+
+```text
+docker build --target build -t haleview-backend-check ./backend
+docker build --target build -t haleview-frontend-check ./frontend
+```
+
+For local development, use Node.js 22.13 or newer. In each of `backend` and `frontend`, run:
+
+```text
+npm ci
 npm run lint
+npm test
 npm run check
 npm run build
 ```
 
-## Errors and limits
+The backend build copies the catalogue into its output directory. Tests use temporary databases and mocked provider responses; they do not need an API key, external account, or a running application. Temporary test data is removed after each test process.
 
-Form and API errors appear without a page reload. Profile calculations and local guidance continue when DeepSeek is unavailable.
+Backend tests cover catalogue contracts, ingredient and recipe retrieval, preference reuse, nutrition function validation, daily and weekly plans, changes and restore, shopping lists, cooking-state validation, authentication boundaries, intake ownership, provider timeouts and errors, and cache recovery. Frontend tests cover pending and failed loads, the Hale navigation entry, guest AI controls, escaped error messages, ISO dates, and the Combine icon. These tests complement manual browser checks; they do not prove that every generated cooking instruction is correct.
 
-The backend allows 60 requests in 60 seconds for one signed-in account or one anonymous IP address. Extra requests receive HTTP 429 and a `Retry-After` header. The limit is stored in memory and resets when the backend restarts. A larger deployment should use a shared rate-limit store.
-
-Local Docker ports bind to `127.0.0.1`. Use an HTTPS reverse proxy when exposing the app outside the machine.
+GitHub Actions runs the same Docker checks for main-branch changes and pull requests, using read-only repository permissions and no provider credentials.
