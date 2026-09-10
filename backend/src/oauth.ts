@@ -197,7 +197,7 @@ async function exchangeCode(provider: OAuthProvider, config: ProviderConfig, cod
   if (!token.access_token) {
     throw new AuthError(502, "GitHub sign-in did not return an access token.");
   }
-  const headers = { Authorization: `Bearer ${token.access_token}`, Accept: "application/vnd.github+json", "User-Agent": "haleview" };
+  const headers = { Authorization: `Bearer ${token.access_token}`, Accept: "application/vnd.github+json", "User-Agent": "numbers-dont-lie" };
   const [userResponse, emailResponse] = await Promise.all([
     fetch("https://api.github.com/user", { headers }),
     fetch("https://api.github.com/user/emails", { headers })

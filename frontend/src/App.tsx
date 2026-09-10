@@ -1,5 +1,3 @@
-import { PageDataState } from "./components/PageDataState";
-import { getNutritionDefaults, getNutritionPreferences } from "./nutrition/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type AccountTokens,
@@ -36,50 +34,18 @@ import {
 import { appPath, appRouteFromPath, isEntryPath, type AppRoute } from "./routing";
 import Tutorial from "./Tutorial";
 import { LoadingDashboard } from "./components/LoadingDashboard";
-import { AppShell, DashboardNavigation } from "./components/AppShell";
+import { AppShell } from "./components/AppShell";
 import { initialForm, initialPrivacy, profileSteps } from "./app-data";
 import { localDateTimeValue } from "./format";
-import { clearGuestSession, markTutorialSeen, tutorialWasSeen } from "./guest-storage";
+import { markTutorialSeen, readGuestSnapshot, storeGuestSnapshot, tutorialWasSeen } from "./guest-storage";
 import { AccessScreen, NotFoundScreen, OverviewScreen } from "./screens/EntryScreens";
 import { DashboardOverview, HaleScreen, ProfileScreen, RecordsScreen, SettingsScreen } from "./screens/DashboardScreens";
 import { ProfileSetupScreen } from "./screens/ProfileSetupScreen";
 import { ProgressScreen } from "./screens/ProgressScreen";
-import { MealPlanScreen } from "./screens/MealPlanScreens";
-import { RecipeScreen } from "./screens/RecipeScreens";
-import { ShoppingListScreen } from "./screens/ShoppingListScreen";
-import { NutritionScreen } from "./screens/NutritionScreens";
-
-const accountSessionKey = "haleview-account-session";
-
-function readStoredRefreshToken(): string | null {
-  try {
-    const token = window.sessionStorage.getItem(accountSessionKey);
-    return token && token.length >= 20 ? token : null;
-  } catch {
-    return null;
-  }
-}
-
-function storeRefreshToken(token: string): void {
-  try {
-    window.sessionStorage.setItem(accountSessionKey, token);
-  } catch {
-    // The account still works until this page closes.
-  }
-}
-
-function removeStoredRefreshToken(): void {
-  try {
-    window.sessionStorage.removeItem(accountSessionKey);
-  } catch {
-    // There is no stored session to remove when browser storage is unavailable.
-  }
-}
 
 function App() {
   const [form, setForm] = useState<ProfileFormValues>(initialForm);
   const [profile, setProfile] = useState<HealthProfile | null>(null);
-  const [profileResolved, setProfileResolved] = useState(false);
   const [privacy, setPrivacy] = useState<PrivacySettings>(initialPrivacy);
   const [history, setHistory] = useState<HealthHistory>({ weights: [], activities: [], analytics: [] });
   const [recommendations, setRecommendations] = useState<Guidance | null>(null);
@@ -97,29 +63,21 @@ function App() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [accessTokenExpiresIn, setAccessTokenExpiresIn] = useState(0);
-  const [sessionRestoring, setSessionRestoring] = useState(() => readStoredRefreshToken() !== null);
   const [guestMode, setGuestMode] = useState(false);
-  const guestVisitRef = useRef(0);
   const [entryView, setEntryView] = useState<"overview" | "access">(() => {
     const params = new URLSearchParams(window.location.search);
     return params.has("reset_token") || params.has("oauth_ticket") || params.has("oauth_error") || window.location.pathname !== "/" ? "access" : "overview";
   });
   const [appRoute, setAppRoute] = useState<AppRoute>(() => isEntryPath(window.location.pathname) ? "dashboard" : appRouteFromPath(window.location.pathname));
   const [oauthProviders, setOauthProviders] = useState({ google: false, github: false });
-  const [onlineAiAvailable, setOnlineAiAvailable] = useState(false);
   const [twoFactorChallenge, setTwoFactorChallenge] = useState<string | null>(null);
   const [twoFactorSecret, setTwoFactorSecret] = useState<string | null>(null);
   const [twoFactorUri, setTwoFactorUri] = useState<string | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [twoFactorState, setTwoFactorState] = useState<"loading" | "off" | "pending" | "on">("loading");
-  const [activityTimezone, setActivityTimezone] = useState<string | null>(null);
-  const [activityTimezoneError, setActivityTimezoneError] = useState<string | null>(null);
-  const [activityTimezoneRetry, setActivityTimezoneRetry] = useState(0);
+  const [twoFactorState, setTwoFactorState] = useState<"loading" | "off" | "pending" | "on">("off");
   const [activityDays, setActivityDays] = useState(0);
   const [activityRecordedAt, setActivityRecordedAt] = useState(localDateTimeValue());
   const [loading, setLoading] = useState(false);
-  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
-  const [profileRetry, setProfileRetry] = useState(0);
   const [saving, setSaving] = useState(false);
   const [activitySaving, setActivitySaving] = useState(false);
   const [recommendationRefreshing, setRecommendationRefreshing] = useState(false);
@@ -127,7 +85,7 @@ function App() {
   const [profileStep, setProfileStep] = useState(0);
   const [furthestProfileStep, setFurthestProfileStep] = useState(0);
   const [sliderErrors, setSliderErrors] = useState<Record<string, string>>({});
-  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [tutorialReturn, setTutorialReturn] = useState<"profile-setup" | "settings">("profile-setup");
   const [error, setError] = useState<string | null>(null);
   const sessionVersionRef = useRef(0);
   const sessionIssuedAtRef = useRef(0);
@@ -135,13 +93,11 @@ function App() {
   const accessTokenRef = useRef<string | null>(null);
   const refreshTokenRef = useRef<string | null>(null);
   const authenticatedSessionRef = useRef<AuthenticatedSession | null>(null);
-  const restoreStartedRef = useRef(false);
 
   const applyAccountTokens = useCallback((tokens: AccountTokens) => {
     sessionIssuedAtRef.current = Date.now();
     accessTokenRef.current = tokens.accessToken;
     refreshTokenRef.current = tokens.refreshToken;
-    storeRefreshToken(tokens.refreshToken);
     setAccessToken(tokens.accessToken);
     setRefreshToken(tokens.refreshToken);
     setAccessTokenExpiresIn(tokens.accessTokenExpiresIn);
@@ -151,7 +107,6 @@ function App() {
     sessionVersionRef.current += 1;
     accessTokenRef.current = null;
     refreshTokenRef.current = null;
-    removeStoredRefreshToken();
     setAccessToken(null);
     setRefreshToken(null);
     setAccessTokenExpiresIn(0);
@@ -185,36 +140,6 @@ function App() {
     };
   }, [applyAccountTokens, clearAccountSession]);
 
-  useEffect(() => {
-    if (restoreStartedRef.current) {
-      return;
-    }
-    restoreStartedRef.current = true;
-    const storedRefreshToken = readStoredRefreshToken();
-    if (!storedRefreshToken) {
-      setSessionRestoring(false);
-      return;
-    }
-    const version = sessionVersionRef.current;
-    refreshAccountSession(storedRefreshToken)
-      .then((tokens) => {
-        if (sessionVersionRef.current !== version) {
-          return;
-        }
-        lastActivityRef.current = Date.now();
-        applyAccountTokens(tokens);
-        setGuestMode(false);
-      })
-      .catch(() => {
-        if (sessionVersionRef.current === version) {
-          clearAccountSession("Session ended. Sign in again.");
-        }
-      })
-      .finally(() => {
-        setSessionRestoring(false);
-      });
-  }, [applyAccountTokens, clearAccountSession]);
-
   const requestWithSession = useCallback(<T,>(operation: (token: string) => Promise<T>): Promise<T> => {
     const session = authenticatedSessionRef.current;
     if (!session) {
@@ -232,33 +157,23 @@ function App() {
   }, []);
   useEffect(() => {
     getAuthConfig()
-      .then((config) => {
-        setOauthProviders(config.oauthProviders);
-        setOnlineAiAvailable(config.onlineAiAvailable);
-      })
+      .then((config) => setOauthProviders(config.oauthProviders))
       .catch(() => {
         setOauthProviders({ google: false, github: false });
-        setOnlineAiAvailable(false);
       });
   }, []);
 
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!savedMessage) return;
-    const timeout = window.setTimeout(() => setSavedMessage(null), 4000);
-    return () => window.clearTimeout(timeout);
-  }, [savedMessage]);
-
   const signedIn = accessToken !== null;
 
-  const navigate = useCallback((route: Exclude<AppRoute, "not-found">, replace = false) => {
+  const navigate = (route: Exclude<AppRoute, "not-found">, replace = false) => {
     const path = appPath(route);
     if (replace) window.history.replaceState({}, document.title, path);
     else window.history.pushState({}, document.title, path);
     setAppRoute(route);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  };
 
   useEffect(() => {
     const handlePopState = () => {
@@ -351,11 +266,9 @@ function App() {
   useEffect(() => {
     if (!accessToken) {
       if (guestMode) {
-        setProfileResolved(true);
         setLoading(false);
         return;
       }
-      setProfileResolved(false);
       setProfile(null);
       setPrivacy(initialPrivacy);
       setHistory({ weights: [], activities: [], analytics: [] });
@@ -363,14 +276,9 @@ function App() {
       setLoading(false);
       return;
     }
-    let active = true;
-    setProfileLoadError(null);
-    setProfileResolved(false);
     setLoading(true);
     requestWithSession(getProfile)
       .then(({ profile: storedProfile, privacy: storedPrivacy, history: storedHistory, recommendations: storedRecommendations }) => {
-        if (!active) return;
-        setProfileResolved(true);
         setHistory(storedHistory);
         setRecommendations(storedRecommendations);
         setPrivacy(storedPrivacy ?? initialPrivacy);
@@ -381,32 +289,28 @@ function App() {
           setFurthestProfileStep(profileSteps.length - 1);
           if (isEntryPath(window.location.pathname)) navigate("dashboard", true);
         } else {
-          setForm(initialForm);
-          setPrivacy(initialPrivacy);
-          setProfileStep(0);
-          setFurthestProfileStep(0);
-          setTutorialOpen(!tutorialWasSeen("account"));
-          navigate("profile-setup", true);
+          const guest = readGuestSnapshot();
+          if (guest) {
+            setForm(guest.profile);
+            setPrivacy(guest.privacy);
+            setProfileStep(1);
+            setFurthestProfileStep(profileSteps.length - 1);
+            setSavedMessage("Guest values are ready. Save them to this account when needed.");
+          }
+          navigate(tutorialWasSeen("account") ? "profile-setup" : "tutorial", true);
         }
       })
       .catch((loadError: unknown) => {
-        if (active) setProfileLoadError(loadError instanceof Error ? loadError.message : "The profile could not be loaded.");
+        setError(loadError instanceof Error ? loadError.message : "The profile could not be loaded.");
       })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [accessToken, guestMode, requestWithSession, navigate, profileRetry]);
+      .finally(() => setLoading(false));
+  }, [accessToken, guestMode, requestWithSession]);
 
   useEffect(() => {
-    if (!loading && profileResolved && (accessToken || guestMode) && !profile && appRoute !== "profile-setup" && appRoute !== "tutorial") {
+    if (!loading && (accessToken || guestMode) && !profile && appRoute !== "profile-setup" && appRoute !== "tutorial") {
       navigate("profile-setup", true);
     }
-  }, [loading, profileResolved, accessToken, guestMode, profile, appRoute, navigate]);
-
-  useEffect(() => {
-    if (appRoute !== "tutorial") return;
-    setTutorialOpen(true);
-    navigate(profile ? "settings" : "profile-setup", true);
-  }, [appRoute, profile, navigate]);
+  }, [loading, accessToken, guestMode, profile, appRoute]);
 
 
   useEffect(() => {
@@ -446,7 +350,6 @@ function App() {
   const update = <K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
     setSavedMessage(null);
-    setError(null);
   };
 
   const toggleExercise = (exercise: ExerciseType) => {
@@ -457,13 +360,8 @@ function App() {
   };
 
   const updatePrivacy = <K extends keyof PrivacySettings>(key: K, value: PrivacySettings[K]) => {
-    if (guestMode && (key === "dataForRecommendations" || key === "emailNotifications" || key === "publicVisibility")) {
-      setPrivacy((current) => ({ ...current, dataForRecommendations: false, emailNotifications: false, publicVisibility: "private" }));
-      return;
-    }
     setPrivacy((current) => ({ ...current, [key]: value }));
     setSavedMessage(null);
-    setError(null);
   };
 
   const updateSliderError = (field: string, fieldError: string | null) => {
@@ -512,7 +410,7 @@ function App() {
   };
 
   const selectProfileStep = (step: number) => {
-    if (step >= 0 && step < profileSteps.length) {
+    if (profile || step <= furthestProfileStep) {
       setError(null);
       setProfileStep(step);
     }
@@ -529,33 +427,54 @@ function App() {
       setError("Choose account access or guest mode first.");
       return;
     }
-    const invalidStep = profileSteps.findIndex((_step, index) => validateProfileStep(index) !== null);
-    if (invalidStep >= 0) {
-      setError(validateProfileStep(invalidStep));
-      setProfileStep(invalidStep);
-      setFurthestProfileStep((current) => Math.max(current, invalidStep));
+    if (!privacy.consentGiven) {
+      setError("Confirm data use before saving.");
+      setProfileStep(3);
+      setFurthestProfileStep(3);
       return;
     }
     setSaving(true);
     setError(null);
     setSavedMessage(null);
     try {
-      const guestVisit = guestVisitRef.current;
-      const privacyForSave = token ? privacy : { ...privacy, dataForRecommendations: false, emailNotifications: false, publicVisibility: "private" as const };
       const saved = token
-        ? await requestWithSession((currentToken) => saveProfile(form, privacyForSave, currentToken))
-        : await saveGuestProfile(form, privacyForSave, history);
-      if (!token && guestVisit !== guestVisitRef.current) return;
+        ? await requestWithSession((currentToken) => saveProfile(form, privacy, currentToken))
+        : await saveGuestProfile(form, privacy, history);
+      let nextRecommendations = saved.recommendations;
+      let guidanceError: string | null = null;
+      if (token && saved.privacy.dataForRecommendations) {
+        try {
+          nextRecommendations = await requestWithSession(refreshRecommendations);
+        } catch (generationError: unknown) {
+          guidanceError = generationError instanceof Error
+            ? generationError.message
+            : "Online AI could not update guidance. Local guidance is still available.";
+        }
+      }
       setProfile(saved.profile);
       setPrivacy(saved.privacy);
       setHistory(saved.history);
-      setRecommendations(saved.recommendations);
+      setRecommendations(nextRecommendations);
       setForm(saved.profile);
-      setSavedMessage(token ? "Profile saved." : "Updated for this visit only.");
-      navigate("dashboard", true);
-      if (!tutorialWasSeen(guestMode ? "guest" : "account")) {
-        setTutorialOpen(true);
+      if (!token && saved.recommendations) {
+        storeGuestSnapshot({
+          profile: saved.profile,
+          privacy: saved.privacy,
+          history: saved.history,
+          recommendations: saved.recommendations
+        });
       }
+      let profileMessage = "Saved in this browser.";
+      if (token && guidanceError) {
+        profileMessage = "Profile saved. Local guidance is ready.";
+      } else if (token && saved.privacy.dataForRecommendations) {
+        profileMessage = "Profile saved. Online guidance is ready.";
+      } else if (token) {
+        profileMessage = "Saved. Values updated.";
+      }
+      setSavedMessage(profileMessage);
+      setError(guidanceError);
+      navigate("dashboard", true);
     } catch (saveError: unknown) {
       const message = saveError instanceof Error ? saveError.message : "The profile could not be saved.";
       setError(message);
@@ -568,27 +487,6 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    let active = true;
-    setActivityTimezone(null);
-    setActivityTimezoneError(null);
-    if (!accessToken) {
-      setActivityRecordedAt(localDateTimeValue());
-      return;
-    }
-    requestWithSession(async (token) => await getNutritionPreferences(token) ?? await getNutritionDefaults(token))
-      .then((preferences) => {
-        if (active) {
-          setActivityTimezone(preferences.timezone);
-          setActivityRecordedAt(localDateTimeValue(new Date(), preferences.timezone));
-        }
-      })
-      .catch((timezoneError: unknown) => {
-        if (active) setActivityTimezoneError(timezoneError instanceof Error ? timezoneError.message : "The saved timezone could not be loaded.");
-      });
-    return () => { active = false; };
-  }, [accessToken, appRoute, requestWithSession, activityTimezoneRetry]);
-
   const addActivity = async () => {
     const token = accessToken;
     if (!token && !guestMode) {
@@ -599,12 +497,8 @@ function App() {
       setError("Save the profile before adding activity.");
       return;
     }
-    if (token && !activityTimezone) {
-      setError("Wait for the saved nutrition timezone to load.");
-      return;
-    }
     const recordedAt = new Date(activityRecordedAt);
-    if (!token && (Number.isNaN(recordedAt.getTime()) || localDateTimeValue(recordedAt) !== activityRecordedAt)) {
+    if (Number.isNaN(recordedAt.getTime())) {
       setError("Enter a valid activity time.");
       return;
     }
@@ -612,15 +506,16 @@ function App() {
     setError(null);
     setSavedMessage(null);
     try {
-      const guestVisit = guestVisitRef.current;
       const savedActivity = token
-        ? await requestWithSession((currentToken) => saveActivityRecord(activityDays, activityRecordedAt, currentToken, activityTimezone!))
+        ? await requestWithSession((currentToken) => saveActivityRecord(activityDays, recordedAt.toISOString(), currentToken))
         : await saveGuestActivity(profile, privacy, history, activityDays, recordedAt.toISOString());
-      if (!token && guestVisit !== guestVisitRef.current) return;
       setHistory(savedActivity.history);
       setRecommendations(savedActivity.recommendations);
-      setActivityRecordedAt(localDateTimeValue(new Date(), token ? activityTimezone! : undefined));
-      setSavedMessage(token ? "Activity saved." : "Activity updated for this visit only.");
+      if (!token && savedActivity.recommendations) {
+        storeGuestSnapshot({ profile, privacy, history: savedActivity.history, recommendations: savedActivity.recommendations });
+      }
+      setActivityRecordedAt(localDateTimeValue());
+      setSavedMessage(token ? "Activity saved." : "Activity saved in this browser.");
     } catch (activityError: unknown) {
       setError(activityError instanceof Error ? activityError.message : "The activity could not be saved.");
     } finally {
@@ -702,7 +597,6 @@ function App() {
         sessionVersionRef.current += 1;
         accessTokenRef.current = null;
         refreshTokenRef.current = null;
-        removeStoredRefreshToken();
         setAccessToken(null);
         setRefreshToken(null);
         setAccessTokenExpiresIn(0);
@@ -817,68 +711,41 @@ function App() {
   };
 
   const signOut = () => {
-    clearGuestSession();
-    guestVisitRef.current += 1;
-    setForm(initialForm);
     clearAccountSession("Signed out.");
     setEntryView("access");
     window.history.replaceState({}, document.title, "/access");
   };
 
   const continueAsGuest = () => {
-    clearGuestSession();
-    guestVisitRef.current += 1;
-    setProfile(null);
-    setForm(initialForm);
-    setPrivacy(initialPrivacy);
-    setHistory({ weights: [], activities: [], analytics: [] });
-    setRecommendations(null);
-    setProfileStep(0);
-    setFurthestProfileStep(0);
-    setSavedMessage(null);
-    setTutorialOpen(true);
-    navigate("profile-setup", true);
+    const stored = readGuestSnapshot();
+    if (stored) {
+      setProfile(stored.profile);
+      setForm(stored.profile);
+      setPrivacy(stored.privacy);
+      setHistory(stored.history);
+      setRecommendations(stored.recommendations);
+      setProfileStep(1);
+      setFurthestProfileStep(profileSteps.length - 1);
+      setSavedMessage("Saved guest data loaded.");
+      navigate("dashboard", true);
+    } else {
+      setProfile(null);
+      setForm(initialForm);
+      setPrivacy(initialPrivacy);
+      setHistory({ weights: [], activities: [], analytics: [] });
+      setRecommendations(null);
+      setProfileStep(0);
+      setFurthestProfileStep(0);
+      setSavedMessage(null);
+      navigate(tutorialWasSeen("guest") ? "profile-setup" : "tutorial", true);
+    }
     setGuestMode(true);
     setAccountError(null);
     setAccountMessage(null);
     setError(null);
   };
 
-  useEffect(() => {
-    if (!guestMode) return;
-    const endVisit = () => {
-      clearGuestSession();
-      guestVisitRef.current += 1;
-      setGuestMode(false);
-      setProfile(null);
-      setForm(initialForm);
-      setPrivacy(initialPrivacy);
-      setHistory({ weights: [], activities: [], analytics: [] });
-      setRecommendations(null);
-      setTutorialOpen(false);
-      setEntryView("access");
-    };
-    const restoredPage = (event: PageTransitionEvent) => { if (event.persisted) endVisit(); };
-    window.addEventListener("pagehide", endVisit);
-    window.addEventListener("pageshow", restoredPage);
-    return () => {
-      window.removeEventListener("pagehide", endVisit);
-      window.removeEventListener("pageshow", restoredPage);
-    };
-  }, [guestMode]);
-
-  useEffect(() => {
-    if (guestMode && appRoute === "hale") {
-      navigate("dashboard", true);
-    }
-  }, [guestMode, appRoute, navigate]);
-
   const openAccountAccess = () => {
-    clearGuestSession();
-    guestVisitRef.current += 1;
-    setForm(initialForm);
-    setPrivacy(initialPrivacy);
-    setTutorialOpen(false);
     setGuestMode(false);
     setEntryView("access");
     setSavedMessage(null);
@@ -886,13 +753,14 @@ function App() {
     window.history.pushState({}, document.title, "/access");
   };
 
-  const openTutorial = () => {
-    setTutorialOpen(true);
+  const openTutorial = (returnRoute: "profile-setup" | "settings") => {
+    setTutorialReturn(returnRoute);
+    navigate("tutorial");
   };
 
   const closeTutorial = () => {
     markTutorialSeen(guestMode ? "guest" : "account");
-    setTutorialOpen(false);
+    navigate(tutorialReturn, true);
   };
 
   const requestReset = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -931,11 +799,8 @@ function App() {
     }
   };
 
-  if (loading || sessionRestoring || (accessToken && !profileResolved && !profileLoadError)) {
-    return <LoadingDashboard view={appRoute} />;
-  }
-  if (accessToken && profileLoadError) {
-    return <main className="app-shell"><PageDataState title="Your account" loading={false} error={profileLoadError} onRetry={() => setProfileRetry((value) => value + 1)} /></main>;
+  if (loading) {
+    return <LoadingDashboard />;
   }
 
   if ((!accessToken && !guestMode && appRoute === "not-found" && !isEntryPath(window.location.pathname)) || ((accessToken || guestMode) && appRoute === "not-found")) {
@@ -991,13 +856,13 @@ function App() {
     />;
   }
 
-  const activeRoute = (appRoute === "tutorial" ? (profile ? "settings" : "profile-setup") : appRoute) as Exclude<AppRoute, "not-found" | "tutorial">;
+  const activeRoute = appRoute as Exclude<AppRoute, "not-found">;
   return (
-    <AppShell route={activeRoute} hasProfile={Boolean(profile)} guestMode={guestMode} signedIn={Boolean(accessToken)} onNavigate={navigate} onOpenAccount={openAccountAccess} onOpenTutorial={openTutorial}>
-      {error && activeRoute !== "profile-setup" && <div className="notice error" role="alert">{error}</div>}
+    <AppShell route={activeRoute} hasProfile={Boolean(profile)} guestMode={guestMode} signedIn={Boolean(accessToken)} onNavigate={navigate} onOpenAccount={openAccountAccess}>
+      {error && <div className="notice error" role="alert">{error}</div>}
       {savedMessage && <div className="notice success" role="status">{savedMessage}</div>}
+      {activeRoute === "tutorial" && <Tutorial onClose={closeTutorial} />}
       {activeRoute === "profile-setup" && <ProfileSetupScreen
-        error={error}
         form={form}
         profile={profile}
         privacy={privacy}
@@ -1005,9 +870,8 @@ function App() {
         furthestProfileStep={furthestProfileStep}
         guestMode={guestMode}
         signedIn={Boolean(accessToken)}
-        onlineAiAvailable={onlineAiAvailable}
         saving={saving}
-        onOpenTutorial={openTutorial}
+        onOpenTutorial={() => openTutorial("profile-setup")}
         onSubmit={save}
         onUpdate={update}
         onUpdatePrivacy={updatePrivacy}
@@ -1017,13 +881,12 @@ function App() {
         onBack={() => { setError(null); setProfileStep((current) => Math.max(0, current - 1)); }}
         onNext={moveToNextProfileStep}
       />}
-      {profile && activeRoute === "dashboard" && <DashboardOverview profile={profile} history={history} recommendations={recommendations} request={requestWithSession} signedIn={Boolean(accessToken)} onNavigate={navigate} navigation={<DashboardNavigation route={activeRoute} guestMode={guestMode} onNavigate={navigate} />} />}
+      {profile && activeRoute === "dashboard" && <DashboardOverview profile={profile} recommendations={recommendations} onNavigate={navigate} />}
       {profile && activeRoute === "profile" && <ProfileScreen profile={profile} onEdit={() => navigate("profile-setup")} />}
       {activeRoute === "settings" && <SettingsScreen
         profile={profile}
         privacy={privacy}
         guestMode={guestMode}
-        onlineAiAvailable={onlineAiAvailable}
         twoFactorState={twoFactorState}
         twoFactorSecret={twoFactorSecret}
         twoFactorUri={twoFactorUri}
@@ -1032,7 +895,7 @@ function App() {
         accountError={accountError}
         accountMessage={accountMessage}
         onEditProfile={() => navigate("profile-setup")}
-        onOpenTutorial={openTutorial}
+        onOpenTutorial={() => openTutorial("settings")}
         onExport={exportProfile}
         onOpenAccount={openAccountAccess}
         onStartTwoFactor={startTwoFactor}
@@ -1041,27 +904,21 @@ function App() {
         onDisableTwoFactor={disableTwoFactorSetup}
         onSignOut={signOut}
       />}
-      {profile && activeRoute === "records" && (accessToken && !activityTimezone ? <PageDataState view="list" title="Records" loading={!activityTimezoneError} error={activityTimezoneError} onRetry={() => setActivityTimezoneRetry((value) => value + 1)} /> : <RecordsScreen
+      {profile && activeRoute === "records" && <RecordsScreen
         history={history}
         activityDays={activityDays}
-        activityTimezone={accessToken ? activityTimezone : Intl.DateTimeFormat().resolvedOptions().timeZone}
         activityRecordedAt={activityRecordedAt}
-        activitySaving={activitySaving || Boolean(accessToken && !activityTimezone)}
+        activitySaving={activitySaving}
         canExport={Boolean(accessToken || guestMode)}
         onExport={exportProfile}
         onActivityDaysChange={setActivityDays}
         onActivityRecordedAtChange={setActivityRecordedAt}
         onAddActivity={addActivity}
-      />)}
+      />}
       {profile && activeRoute === "progress" && (
-        <ProgressScreen profile={profile} history={history} rangeDays={rangeDays} request={requestWithSession} signedIn={Boolean(accessToken)} onRangeChange={setRangeDays} onNavigate={navigate} />
+        <ProgressScreen profile={profile} history={history} rangeDays={rangeDays} onRangeChange={setRangeDays} />
       )}
-      {profile && recommendations && accessToken && activeRoute === "hale" && <HaleScreen guidance={recommendations} allowOnlineAi={privacy.dataForRecommendations} recommendationRefreshing={recommendationRefreshing} onRefresh={refreshGuidance} request={requestWithSession} />}
-      {activeRoute === "meal-plan" && <MealPlanScreen request={requestWithSession} signedIn={Boolean(accessToken)} />}
-      {activeRoute === "shopping-list" && <ShoppingListScreen request={requestWithSession} signedIn={Boolean(accessToken)} />}
-      {activeRoute === "nutrition" && <NutritionScreen request={requestWithSession} signedIn={Boolean(accessToken)} />}
-      {activeRoute === "recipes" && <RecipeScreen request={requestWithSession} signedIn={Boolean(accessToken)} />}
-      {tutorialOpen && <Tutorial currentRoute={activeRoute} hasProfile={Boolean(profile)} signedIn={Boolean(accessToken)} onNavigate={navigate} onClose={closeTutorial} />}
+      {profile && recommendations && activeRoute === "hale" && <HaleScreen guidance={recommendations} allowOnlineAi={Boolean(accessToken && privacy.dataForRecommendations)} recommendationRefreshing={recommendationRefreshing} onRefresh={refreshGuidance} />}
     </AppShell>
   );
 }

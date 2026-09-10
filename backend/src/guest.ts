@@ -151,7 +151,7 @@ function requestParts(input: unknown): { value: Record<string, unknown>; history
   return {
     value: input,
     history: parseHistory(input.history),
-    privacy: { ...parsePrivacy(input.privacy, previousConsent), dataForRecommendations: false, emailNotifications: false, publicVisibility: "private" }
+    privacy: parsePrivacy(input.privacy, previousConsent)
   };
 }
 

@@ -5,5 +5,5 @@ export function withoutGoalPrefix(value: string): string {
 }
 
 export function guidanceContext(guidance: Guidance): string {
-  return `These suggestions use your ${guidance.goal.toLowerCase()} goal, saved profile, and recent records.`;
+  return `I prepared these recommendations for your ${guidance.goal.toLowerCase()} goal. I used your current metrics and recent records.`;
 }

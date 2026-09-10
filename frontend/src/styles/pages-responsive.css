@@ -7,22 +7,15 @@
   .main-tabs {
     order: 3;
     width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    overflow-x: auto;
   }
 
   .main-tabs button {
-    flex: 1 0 auto;
+    flex: 1;
   }
 
-  .dashboard-simple-grid {
+  .dashboard-summary-grid,
+  .settings-grid {
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-today-card,
-  .dashboard-track-card {
-    min-height: 0;
   }
 }
 
@@ -41,136 +34,23 @@
     flex: 1 0 auto;
   }
 
+  .dashboard-score,
   .profile-details {
     grid-template-columns: 1fr;
   }
 
-  .profile-hero-heading {
+  .dashboard-score .metric-list {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 14px;
   }
 
-  .profile-hero-heading .primary-button {
-    width: 100%;
+  .dashboard-score .metric-row {
+    padding: 11px 0;
   }
 
-  .profile-highlights {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-details-wide div:nth-child(-n + 3) {
-    grid-column: auto;
-  }
-
-  .settings-hero-heading {
-    display: grid;
-  }
-
-  .settings-status-list {
-    justify-content: flex-start;
-  }
-
-  .settings-row {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .settings-row > .secondary-button,
-  .settings-row > .setting-value {
-    grid-column: 2;
-    justify-self: start;
-  }
-
-  .settings-account-callout {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .settings-account-callout .primary-button {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-
-  .records-next-step .activity-entry {
-    grid-template-columns: 1fr;
-  }
-
-  .records-next-step .primary-button {
-    width: 100%;
-  }
-
-  .dashboard-next-card {
-    grid-template-columns: 1fr;
-    padding: var(--space-5);
-  }
-
-  .progress-focus-panel {
-    grid-template-columns: 1fr;
-    padding: var(--space-5);
-  }
-
-  .progress-focus-ring {
-    justify-self: center;
-  }
-
-  .progress-snapshot {
-    grid-template-columns: 1fr;
-  }
-
-  .progress-snapshot-item {
-    grid-template-areas: "icon label value";
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    justify-content: stretch;
-    padding: var(--space-3) 0;
-  }
-
-  .progress-snapshot-item + .progress-snapshot-item {
-    border-top: 1px solid var(--line);
-    border-left: 0;
-  }
-
-  .progress-focus-action {
-    width: 100%;
-  }
-
-  .app-accordion-body .progress-detail-list {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-progress-ring {
-    width: 140px;
-    height: 140px;
-    justify-self: center;
-  }
-
-  .dashboard-quick-values {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-quick-values > div {
-    grid-template-areas: "icon label value";
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    justify-content: stretch;
-    padding: var(--space-3) 0;
-  }
-
-  .dashboard-quick-values > div + div {
-    border-top: 1px solid var(--line);
-    border-left: 0;
-  }
-
-  .dashboard-primary-action {
-    width: 100%;
-  }
-
-  .dashboard-today-card,
-  .dashboard-track-card {
-    padding: var(--space-5);
-  }
-
-  .dashboard-day-list li {
-    grid-template-columns: 32px minmax(0, 1fr);
-  }
-
-  .dashboard-day-list time {
-    grid-column: 2;
+  .dashboard-guidance {
+    align-items: stretch;
   }
 
   .hale-briefing-header,
@@ -178,14 +58,6 @@
   .hale-page-heading {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .hale-page-title {
-    width: 100%;
-  }
-
-  .hale-ai-button {
-    width: 100%;
   }
 
   .hale-guidance-layout {
@@ -209,59 +81,11 @@
     gap: var(--space-5);
   }
 
-  .tutorial-overlay {
-    top: auto;
-    right: 8px;
-    bottom: 8px;
-    left: 8px;
-    width: auto;
-    max-height: calc(100vh - 16px);
-    padding: 18px;
-  }
-
   .tutorial-heading {
     align-items: flex-start;
-  }
-
-  .tutorial-drag-handle {
-    display: none;
   }
 
   .tutorial-content {
     padding: var(--space-5) 0;
   }
-}
-.profile-save-error { margin: 20px 0 16px; scroll-margin-block: 24px; }
-.profile-save-error p { margin: 8px 0; line-height: 1.5; }
-.profile-save-error:focus { outline: 2px solid var(--color-danger); outline-offset: 3px; }
-.mobile-tutorial {
-  position: fixed;
-  z-index: 30;
-  bottom: max(8px, env(safe-area-inset-bottom));
-  left: 8px;
-  right: 8px;
-  padding: 12px 14px;
-  max-height: min(180px, calc(var(--guide-viewport-height, 100dvh) * 0.35));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  background: var(--panel);
-  border: 1px solid var(--color-oat);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 24px #0005;
-}
-.mobile-tutorial.is-expanded { max-height: min(340px, calc(var(--guide-viewport-height, 100dvh) * 0.45)); }
-.mobile-tutorial-heading { display: flex; align-items: center; gap: 10px; }
-.mobile-tutorial-heading strong { flex: 1; font-size: 0.78rem; line-height: 1.4; }
-.mobile-tutorial-heading .text-button { flex-shrink: 0; padding: 5px 0; }
-.mobile-tutorial-task { margin: 8px 0; color: var(--color-oat); font-size: 0.78rem; line-height: 1.5; }
-.mobile-tutorial-actions { display: flex; justify-content: space-between; gap: 12px; }
-.mobile-tutorial-actions .text-button { padding: 5px 0; }
-.mobile-tutorial-details { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
-.mobile-tutorial-details p { font-size: 0.8rem; line-height: 1.5; color: var(--muted); }
-.mobile-tutorial-details label { display: grid; gap: 6px; font-size: 0.78rem; }
-.mobile-tutorial-details .secondary-button { margin: 12px 0; }
-.mobile-tutorial-details small { display: block; margin-bottom: 12px; color: var(--muted); }
-@media (max-width: 680px) {
-  body.has-mobile-guide .app-shell { padding-bottom: calc(var(--mobile-guide-height, 150px) + 40px); }
-  html:has(body.has-mobile-guide) { scroll-padding-bottom: calc(var(--mobile-guide-height, 150px) + 32px); }
 }

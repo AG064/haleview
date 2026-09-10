@@ -57,11 +57,9 @@
   }
 
   .hale-overview-card {
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 16px;
-    padding: 24px;
+    gap: 18px;
+    padding: 24px 20px;
   }
-
 
   .access-screen {
     padding: 12px;
@@ -231,8 +229,8 @@ input,
 
 .provider-button:hover:not(:disabled),
 .secondary-button:hover:not(:disabled) {
-  border-color: var(--line);
-  background: var(--color-surface-sage);
+  border-color: #716c61;
+  background: #403d36;
 }
 
 .account-switch button.active {
@@ -241,12 +239,12 @@ input,
 
 .wizard-step.current span {
   border-color: var(--accent);
-  color: var(--panel);
+  color: var(--color-text);
   background: var(--accent);
 }
 
 .primary-button:hover:not(:disabled) {
-  background: var(--accent-dark);
+  background: #829879;
 }
 
 select {
@@ -257,7 +255,7 @@ select {
 
 label,
 .checkbox-group > span {
-  color: var(--ink);
+  color: #d8d1c5;
 }
 
 input::placeholder {
@@ -275,29 +273,29 @@ summary:focus-visible {
 }
 
 .notice.error {
-  border-color: var(--danger);
-  background: var(--color-surface-clay);
+  border-color: #77524b;
+  background: #3d2d29;
 }
 
 .notice.success {
-  border-color: var(--accent);
-  background: var(--color-surface-sage);
+  border-color: #596d52;
+  background: #303a2d;
 }
 
 .progress-track {
-  background: var(--line);
+  background: #46433b;
 }
 
 .bmi-low {
-  background: var(--color-surface-clay);
+  background: #6b5d48;
 }
 
 .bmi-healthy {
-  background: var(--color-success-surface);
+  background: #586b50;
 }
 
 .bmi-high {
-  background: var(--color-surface-clay);
+  background: #765046;
 }
 
 .bmi-segment {
@@ -305,23 +303,23 @@ summary:focus-visible {
 }
 
 .activity-block {
-  border-color: var(--line);
-  background: var(--surface);
+  border-color: #575349;
+  background: #3b3832;
 }
 
-.activity-level-1 { background: var(--color-success-surface); }
-.activity-level-2 { background: var(--color-surface-sage); }
-.activity-level-3 { background: var(--color-sage); }
-.activity-level-4 { background: var(--color-sage-strong); }
+.activity-level-1 { background: #465143; }
+.activity-level-2 { background: #596953; }
+.activity-level-3 { background: #718368; }
+.activity-level-4 { background: #91a486; }
 
 .priority-high {
-  color: var(--danger);
-  background: var(--color-surface-clay);
+  color: #efb09e;
+  background: #4a302a;
 }
 
 .priority-medium {
   color: var(--color-oat);
-  background: var(--color-surface-clay);
+  background: #463b29;
 }
 
 .priority-low {

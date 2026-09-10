@@ -1,14 +1,13 @@
-import { displayDate, sentenceLabel } from "../format";
+import { displayDate } from "../format";
 import { guidanceContext, withoutGoalPrefix } from "../hale-guidance";
 import type { Guidance, RecommendationItem } from "../types";
 
 interface HaleBriefingProps {
   guidance: Guidance;
-  canOpen: boolean;
   onOpen: () => void;
 }
 
-export function HaleBriefing({ guidance, canOpen, onOpen }: HaleBriefingProps) {
+export function HaleBriefing({ guidance, onOpen }: HaleBriefingProps) {
   const primaryItem = guidance.items[0];
   const remainingCount = Math.max(0, guidance.items.length - 1);
 
@@ -35,9 +34,7 @@ export function HaleBriefing({ guidance, canOpen, onOpen }: HaleBriefingProps) {
       )}
 
       <footer className="hale-briefing-footer">
-        <button className="text-button" type="button" disabled={!canOpen} title={canOpen ? undefined : "Sign in to use Hale."} onClick={onOpen}>
-          {canOpen ? "Open Hale" : "Sign in to open Hale"}
-        </button>
+        <button className="text-button" type="button" onClick={onOpen}>Open Hale</button>
         {remainingCount > 0 && (
           <span>{remainingCount} more {remainingCount === 1 ? "recommendation" : "recommendations"}</span>
         )}
@@ -50,7 +47,7 @@ export function GuidanceMeta({ guidance }: { guidance: Guidance }) {
   return (
     <div className="hale-guidance-meta">
       <GuidanceSource guidance={guidance} />
-      <span>Updated <time dateTime={guidance.generatedAt}>{displayDate(guidance.generatedAt)}</time></span>
+      <span>Updated {displayDate(guidance.generatedAt)}</span>
     </div>
   );
 }
@@ -66,7 +63,7 @@ export function GuidanceSource({ guidance }: { guidance: Guidance }) {
 export function PrimaryGuidance({ item }: { item: RecommendationItem }) {
   return (
     <article className="hale-primary-guidance">
-      <span className={`priority priority-${item.priority}`}>{sentenceLabel(item.priority)}</span>
+      <span className={`priority priority-${item.priority}`}>{item.priority}</span>
       <div>
         <strong>{item.title}</strong>
         <p>{withoutGoalPrefix(item.text)}</p>
