@@ -35,6 +35,7 @@ export interface PrivacySettings {
 }
 
 export interface HealthProfileInput {
+  displayName?: string;
   age: number;
   gender: string;
   heightCm: number;
@@ -215,7 +216,12 @@ export function parseProfile(input: unknown): HealthProfileInput {
     throw new ProfileValidationError("Profile payload must be an object.");
   }
 
+  const displayName = optionalString(input, "displayName", 60);
+  if (displayName && !/^[\p{L}\p{M}][\p{L}\p{M} .'\u2019-]*$/u.test(displayName)) {
+    throw new ProfileValidationError("Name must contain letters, spaces, apostrophes or hyphens.");
+  }
   return {
+    ...(displayName ? { displayName } : {}),
     age: numberInRange(input, "age", 1, 120, true),
     gender: requiredString(input, "gender", 40),
     heightCm: numberInRange(input, "heightCm", 50, 250),

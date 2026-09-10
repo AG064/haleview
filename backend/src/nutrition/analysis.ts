@@ -173,6 +173,8 @@ function buildPeriod(records: NutritionIntakeRecord[], endDate: string, days: nu
   };
 }
 
+export { buildPeriod as buildNutritionPeriod };
+
 function closeness(actual: number, target: number): number {
   if (target <= 0) return 0;
   return Math.round(clamp(100 - Math.abs(actual - target) / target * 100));

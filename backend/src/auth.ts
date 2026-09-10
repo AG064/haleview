@@ -85,6 +85,13 @@ database.exec(`
     revoked_at TEXT
   );
 
+  CREATE TABLE IF NOT EXISTS auth_sessions (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT
+  );
+
   CREATE TABLE IF NOT EXISTS auth_email_outbox (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email_type TEXT NOT NULL,
@@ -101,6 +108,10 @@ database.exec(`
     used_at TEXT
   );
 `);
+
+const refreshColumns = database.prepare("PRAGMA table_info(refresh_tokens)").all() as Array<{ name?: string }>;
+if (!refreshColumns.some((column) => column.name === "session_id")) database.exec("ALTER TABLE refresh_tokens ADD COLUMN session_id TEXT");
+database.exec("CREATE INDEX IF NOT EXISTS refresh_tokens_session ON refresh_tokens(session_id)");
 
 const userColumns = database.prepare("PRAGMA table_info(users)").all() as Array<{ name?: string }>;
 if (!userColumns.some((column) => column.name === "two_factor_secret")) {
@@ -364,25 +375,37 @@ function signedToken(payload: Record<string, unknown>): string {
   return `${header}.${body}.${signature}`;
 }
 
-function accessToken(userId: number): string {
+function accessToken(userId: number, sessionId: string): string {
   const issuedAt = Math.floor(Date.now() / 1000);
   return signedToken({
     sub: String(userId),
     type: "access",
+    sid: sessionId,
     jti: randomBytes(12).toString("base64url"),
     iat: issuedAt,
     exp: issuedAt + accessTokenSeconds
   });
 }
 
-function issueTokens(userId: number): AuthTokens {
+function issueTokens(userId: number, existingSessionId?: string | null, previousRefreshId?: number): AuthTokens {
   const refreshToken = makeToken();
   const expiresAt = new Date(Date.now() + refreshTokenSeconds * 1000).toISOString();
-  database
-    .prepare("INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)")
-    .run(userId, hashToken(refreshToken), expiresAt);
+  const sessionId = existingSessionId ?? randomBytes(24).toString("base64url");
+  database.exec("BEGIN IMMEDIATE");
+  try {
+    if (existingSessionId) {
+      const session = database.prepare("SELECT expires_at, revoked_at FROM auth_sessions WHERE id = ? AND user_id = ?")
+        .get(sessionId, userId) as { expires_at: string; revoked_at?: string | null } | undefined;
+      if (!session || session.revoked_at || Date.parse(session.expires_at) <= Date.now()) throw new AuthError(401, "This session has ended. Sign in again.");
+      database.prepare("UPDATE auth_sessions SET expires_at = ? WHERE id = ?").run(expiresAt, sessionId);
+    } else database.prepare("INSERT INTO auth_sessions (id, user_id, expires_at) VALUES (?, ?, ?)").run(sessionId, userId, expiresAt);
+    database.prepare("INSERT INTO refresh_tokens (user_id, token_hash, expires_at, session_id) VALUES (?, ?, ?, ?)")
+      .run(userId, hashToken(refreshToken), expiresAt, sessionId);
+    if (previousRefreshId !== undefined) database.prepare("UPDATE refresh_tokens SET revoked_at = ? WHERE id = ?").run(nowIso(), previousRefreshId);
+    database.exec("COMMIT");
+  } catch (error) { database.exec("ROLLBACK"); throw error; }
   return {
-    accessToken: accessToken(userId),
+    accessToken: accessToken(userId, sessionId),
     refreshToken,
     accessTokenExpiresIn: accessTokenSeconds
   };
@@ -616,13 +639,33 @@ export function refresh(input: unknown): AuthTokens {
   }
   const tokenHash = hashToken(refreshToken);
   const row = database
-    .prepare("SELECT id, user_id, expires_at, revoked_at FROM refresh_tokens WHERE token_hash = ?")
-    .get(tokenHash) as { id: number; user_id: number; expires_at: string; revoked_at?: string | null } | undefined;
+    .prepare("SELECT id, user_id, expires_at, revoked_at, session_id FROM refresh_tokens WHERE token_hash = ?")
+    .get(tokenHash) as { id: number; user_id: number; expires_at: string; revoked_at?: string | null; session_id?: string | null } | undefined;
   if (!row || row.revoked_at || Date.parse(row.expires_at) <= Date.now() || !userById(row.user_id)) {
     throw new AuthError(401, "The refresh token is not valid.");
   }
-  database.prepare("UPDATE refresh_tokens SET revoked_at = ? WHERE id = ?").run(nowIso(), row.id);
-  return issueTokens(row.user_id);
+  return issueTokens(row.user_id, row.session_id, row.id);
+}
+
+export function logout(userId: number, authorization: string | undefined): void {
+  if (!authorization?.startsWith("Bearer ")) throw new AuthError(401, "Sign in is required.");
+  const payload = signedPayload(authorization.slice(7).trim());
+  if (payload.sub !== String(userId) || typeof payload.sid !== "string") throw new AuthError(401, "This session has ended.");
+  database.exec("BEGIN IMMEDIATE");
+  try {
+    database.prepare("UPDATE auth_sessions SET revoked_at = ? WHERE id = ? AND user_id = ?").run(nowIso(), payload.sid, userId);
+    database.prepare("UPDATE refresh_tokens SET revoked_at = ? WHERE session_id = ? AND user_id = ? AND revoked_at IS NULL").run(nowIso(), payload.sid, userId);
+    database.exec("COMMIT");
+  } catch (error) { database.exec("ROLLBACK"); throw error; }
+}
+
+export function logoutSession(authorization: string | undefined): void {
+  if (!authorization?.startsWith("Bearer ")) throw new AuthError(401, "Sign in is required.");
+  const payload = signedPayload(authorization.slice(7).trim());
+  const userId = Number(payload.sub);
+  if (payload.type !== "access" || typeof payload.sub !== "string" || !Number.isSafeInteger(userId) || userId < 1) throw new AuthError(401, "This session is not valid.");
+  // A signed expired token may revoke its own session, but cannot authorize data access.
+  logout(userId, authorization);
 }
 
 export async function requestPasswordReset(input: unknown): Promise<{ resetLink?: string }> {
@@ -659,6 +702,7 @@ export function confirmPasswordReset(input: unknown): void {
   try {
     database.prepare("UPDATE users SET password_hash = ?, reset_token_hash = NULL, reset_expires_at = NULL WHERE id = ?").run(hashPassword(password), user.id);
     database.prepare("UPDATE refresh_tokens SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL").run(nowIso(), user.id);
+    database.prepare("UPDATE auth_sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL").run(nowIso(), user.id);
     database.exec("COMMIT");
   } catch (error) {
     database.exec("ROLLBACK");
@@ -676,6 +720,7 @@ function verifyAccessToken(value: string): number {
   if (
     record.type !== "access" ||
     typeof record.sub !== "string" ||
+    typeof record.sid !== "string" ||
     typeof record.exp !== "number" ||
     record.exp <= Math.floor(Date.now() / 1000)
   ) {
@@ -685,6 +730,9 @@ function verifyAccessToken(value: string): number {
   if (!Number.isInteger(userId) || !userById(userId)) {
     throw new AuthError(401, "Sign in is required.");
   }
+  const session = database.prepare("SELECT expires_at, revoked_at FROM auth_sessions WHERE id = ? AND user_id = ?")
+    .get(record.sid as string, userId) as { expires_at: string; revoked_at?: string | null } | undefined;
+  if (!session || session.revoked_at || Date.parse(session.expires_at) <= Date.now()) throw new AuthError(401, "This session has ended. Sign in again.");
   return userId;
 }
 

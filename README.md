@@ -2,12 +2,73 @@
 
 Haleview is a wellness and nutrition planning application.
 
-Haleview uses your saved health profile when creating nutrition settings, so you do not need to enter the same information twice.
+Haleview reuses the saved health profile for nutrition settings and conversational data access, so users do not enter the same information twice.
 
 The current nutrition work includes validated preferences, standard units, backend nutrition calculations, a local catalogue of 558 ingredients and 542 recipes, recipe search, filters, recipe details, local relevance retrieval, meal plans, saved plan versions, shopping lists, intake records, and progress analysis. It is not medical data.
 
 The application is not a medical service. Check health advice before using it.
 
+## Chat with Hale
+
+Open Hale after completing your profile. You can ask about health metrics, progress, meal plans, recipe ingredients and preparation, recorded nutrition, or general wellness. For example, ask "What nutrients are in my breakfast?" and then "Is that enough protein?". The follow-up stays attached to that breakfast. Existing guidance remains below the conversation.
+
+Choose Concise or Detailed before sending. Both modes show the same core facts. Detailed replies add context, limitations and supporting records. Full recipe requests include the ingredient list and ordered preparation steps in either mode. Add an optional Name for Hale under Profile's optional details if you want personal replies.
+
+### Conversation and data access
+
+The conversation layer validates messages, tracks the account-owned history, chooses response detail and manages the provider exchange. The data-access layer retrieves only the permitted fields for the authenticated account and formats the numerical results. Account identity never comes from model arguments or user-written identifiers.
+
+The seven read-only functions are:
+
+| Function | Data returned |
+| --- | --- |
+| get_health_metrics | Current weight, BMI, height, activity, fitness and wellness components, or exact records for a specified date |
+| get_health_goals | Chosen name, fitness and weight goals, distance to the target, exercise and dietary preferences |
+| get_health_progress | Recorded weight, BMI, health-score or activity changes, including dates, differences and missing-data limits |
+| get_meal_plan | A daily or seven-day meal plan, optionally restricted to breakfast, lunch, dinner or snack |
+| get_recipe | A planned or own saved recipe's scaled ingredients, preparation and nutritional contribution |
+| get_nutrition_intake | Recorded intake versus targets, dietary suggestions and trends across logged dates |
+| get_wellness_guidance | General guidance on sleep, activity, gentle stretching, hydration and stress |
+
+A message is added to recent context, the model selects a function, arguments are validated before retrieval, and the result is returned with its function-call identifier. Hale then produces a brief explanation. The application renders exact figures, comparisons, ingredients and steps from backend-produced sections. Completed turns are saved and returned to the browser. Recognized personal-data requests require function use; one recognized request can also require the specific relevant function.
+
+The assistant cannot update health data, meals or account settings. Email, date of birth, age, credentials, account identifiers and other users' records are excluded from chat tool payloads. Private recipes require ownership even when a caller knows the recipe identifier. Numbers and target comparisons are calculated by the existing health and nutrition modules. Planned food remains distinct from recorded consumption. A meal's protein is shown as a contribution to the daily target, not as a whole day's intake.
+
+Health progress uses the current calendar month, previous calendar month or trailing seven days. Nutrition supports today, trailing seven/thirty days and the previous calendar month. Historical health scores do not reconstruct later nutrition adjustments. Missing measurements are not interpolated, and days without food records are unknown rather than proof of zero intake. A saved fitness level is self-reported; activity entries alone cannot prove a change in fitness.
+
+### Prompts, model and memory
+
+The system prompt defines Hale's scope, tone, terminology, output structure, medical limitations and privacy rules. It includes examples for all six conversation categories, goal queries, indirect references, personalization, missing data and sensitive requests. Model prose explains the data; numerical results come from backend sections. Output checks reject malformed JSON, numerical prose, unsafe markup, private identifiers and selected unsafe treatment claims. These checks reduce risk and do not prove every qualitative model statement is correct.
+
+Online chat reuses the configured DeepSeek provider and the Online AI consent setting. The default model is deepseek-v4-flash. Its function calling and JSON responses fit the existing nutrition integration, while keeping one provider simplifies configuration and failure handling. Chat uses temperature 0.2 and top-p 1 with thinking disabled. Concise replies have an output limit of 900 tokens and detailed replies 1600 tokens. Deterministic calculations stay outside the model in both modes.
+
+A request allows at most two tool rounds, a final response and one format repair within a shared 55-second deadline. Context size and total returned token usage are bounded. The backend stores provider token totals with the turn for inspection. One account can have one active reply, and the service caps simultaneous active accounts.
+
+Conversation history is encrypted at rest and retained until the account clears it. The browser initially loads forty turns and can load earlier messages. Personal data export includes the full conversation. The provider receives the last five turns and the latest server-owned topic/meal reference, with bounded field lengths and valid JSON. Loading earlier messages does not expand the provider context. Automatic summarization and dynamic topic compression are not implemented.
+
+### Errors and boundaries
+
+Without online access, labelled local replies can still retrieve the same saved data and general guidance. Provider timeouts, rejected requests, invalid function calls and unusable output return a clear fallback without exposing provider credentials or internal error text. Request identifiers prevent a retry from creating a second saved reply. Input errors preserve the browser draft.
+
+The assistant blocks contact details and credential-like text, keeps retrieved text separate from instructions, and refuses requests for other people's data. Medical concerns receive appropriate professional-care guidance. General sleep and movement guidance is informed by the [NHS sleep guide](https://www.nhs.uk/every-mind-matters/mental-health-issues/sleep/) and [NHS back-pain guidance](https://www.nhs.uk/conditions/back-pain/). Hale cannot diagnose or prescribe treatment.
+
+Sign-out revokes the server session and its refresh-token lineage. Password reset revokes all account sessions. Chat checks authorization again after provider requests, so a reply that finishes after sign-out is not saved or returned. Separate signed-in sessions are not ended by a normal sign-out on one device. If the server cannot be reached, the interface states that only the local session was cleared.
+
+Chat chart generation, proactive chart suggestions, automatic history compression and dynamic context detail are not included yet. Existing Progress and Nutrition charts remain available.
+
+This variation uses the haleview-platform Compose project name and ports 29450/29451, separate from earlier review deployments. Do not attach an earlier project's data volume to this variation.
+## Repository variations
+
+The GitHub repository keeps the application variations on separate branches. Main contains the latest integrated application. Each branch runs Docker build checks, and pull requests into main run the same checks.
+
+| Branch | Variation |
+| --- | --- |
+| main | Latest integrated Haleview application |
+| ai-assistant | Health analytics, nutrition planning and conversational Hale |
+| counting-calories | Health analytics and nutrition planning |
+| numbers-dont-lie | Health profiles, analytics, goals and progress |
+
+The health functions originate in Numbers Don't Lie, the nutrition functions in Counting Calories, and the conversation/data-access layers in AI Assistant. Each earlier variation remains available independently.
 ## Recipe data
 
 The landing-page lifestyle photo is by [olia danilevich on Pexels](https://www.pexels.com/photo/a-person-making-salad-9004734/), used under the [Pexels licence](https://www.pexels.com/license/). It illustrates everyday food preparation and is not a catalogue recipe photo.
@@ -35,13 +96,13 @@ docker compose up --build
 Open the application at:
 
 ```text
-http://127.0.0.1:27450
+http://127.0.0.1:29450
 ```
 
 Check the backend at:
 
 ```text
-http://127.0.0.1:27451/health
+http://127.0.0.1:29451/health
 ```
 
 Stop the application:
@@ -76,7 +137,7 @@ Haleview uses selected icons from [Lucide](https://lucide.dev). The React packag
 
 ## Meal planning
 
-Sign in to save a daily or seven-day plan. Haleview uses the saved health
+Sign in to save a daily or seven-day plan. Haleview uses the saved Project 1
 profile and nutrition preferences. Each plan shows meal type, time, recipe,
 servings, and calculated nutrition. Each meal and day also shows its backend-calculated share of the saved daily calorie and macronutrient targets.
 
@@ -213,7 +274,7 @@ Data export in Settings includes the account's health history, nutrition
 preferences and history, plans and versions, shopping lists, intake, and feedback.
 It does not include sign-in tokens or provider keys.
 
-Only the health fields needed for planning are sent to the provider. Names, email addresses, account IDs, and access data are not included.
+Nutrition generation sends only the health fields needed for planning and excludes names, email addresses, account IDs and access data. Hale chat can also use the optional chosen name under the Online AI consent setting; contact details and credentials remain excluded from its tools.
 
 Provider JSON and function arguments are checked before use. Only the listed nutrition functions can run. Recipe selections must use IDs from the local retrieval result. Nutrition calls must match the selected recipes and serving sizes.
 

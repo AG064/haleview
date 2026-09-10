@@ -6,7 +6,7 @@ const directory = mkdtempSync(join(tmpdir(), "haleview-test-"));
 process.env.DATA_FILE = join(directory, "test.db");
 process.env.NODE_ENV = "test";
 process.env.PUBLIC_APP_URL = "http://127.0.0.1:5173";
-for (const name of ["DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY_FILE", "AUTH_JWT_SECRET", "AUTH_JWT_SECRET_FILE", "RESEND_API_KEY", "RESEND_API_KEY_FILE", "GOOGLE_CLIENT_ID", "GITHUB_CLIENT_ID"]) {
+for (const name of ["DEEPSEEK_API_KEY", "DEEPSEEK_API_KEY_FILE", "DEEPSEEK_ENV_FILE", "DEEPSEEK_MODEL", "DEEPSEEK_BASE_URL", "AUTH_JWT_SECRET", "AUTH_JWT_SECRET_FILE", "DATA_ENCRYPTION_KEY", "DATA_ENCRYPTION_KEY_FILE", "RESEND_API_KEY", "RESEND_API_KEY_FILE", "GOOGLE_CLIENT_ID", "GITHUB_CLIENT_ID"]) {
   delete process.env[name];
 }
 
