@@ -268,6 +268,11 @@ export async function refreshAccountSession(refreshToken: string): Promise<Accou
   return (await response.json()) as AccountTokens;
 }
 
+export async function logoutAccount(token: string): Promise<void> {
+  const response = await fetch("/api/auth/logout", { method: "POST", headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5000) });
+  if (!response.ok && response.status !== 401) throw new ApiError(response.status, await readError(response));
+}
+
 export async function exchangeOAuthTicket(): Promise<AccountTokens> {
   const response = await fetch("/api/auth/oauth/exchange", {
     method: "POST",

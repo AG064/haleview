@@ -6,7 +6,7 @@ export function createChatProvider(fetchImpl: typeof fetch = fetch): ChatProvide
   const config = getDeepSeekConfig();
   if (!config) return null;
   return {
-    async complete(messages, allowTools, signal, requireTools = false) {
+    async complete(messages, allowTools, signal, requireTools = false, options = {}) {
       const response = await fetchImpl(`${config.baseUrl}/chat/completions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.apiKey}` },
@@ -15,10 +15,10 @@ export function createChatProvider(fetchImpl: typeof fetch = fetch): ChatProvide
           thinking: { type: "disabled" },
           temperature: 0.2,
           top_p: 1,
-          max_tokens: 900,
+          max_tokens: options.mode === "detailed" ? 1600 : 900,
           response_format: { type: "json_object" },
           messages,
-          ...(allowTools ? { tools: assistantTools, tool_choice: requireTools ? "required" : "auto" } : {}),
+          ...(allowTools ? { tools: assistantTools, tool_choice: options.toolName ? { type: "function", function: { name: options.toolName } } : requireTools ? "required" : "auto" } : {}),
         }),
         signal,
       });

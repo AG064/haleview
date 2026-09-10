@@ -15,6 +15,7 @@ export type ExerciseType = (typeof exerciseTypes)[number];
 export type PublicVisibility = "private" | "summary";
 
 export interface ProfileFormValues {
+  displayName?: string;
   age: number;
   gender: string;
   heightCm: number;

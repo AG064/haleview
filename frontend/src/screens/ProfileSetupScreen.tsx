@@ -118,6 +118,7 @@ function BasicStep({ form, onUpdate, onSliderValidity }: Pick<ProfileSetupScreen
       <details className="optional-section">
         <summary>Optional profile details</summary>
         <div className="field-grid two-columns optional-fields">
+          <label>Name for Hale<input autoComplete="given-name" maxLength={60} value={form.displayName ?? ""} onChange={(event) => onUpdate("displayName", event.target.value)} /><small>Optional. Hale can use this name in your conversations.</small></label>
           <label>Occupation type<input value={form.occupationType} maxLength={80} placeholder="For example, office work" onChange={(event) => onUpdate("occupationType", event.target.value)} /></label>
           <label className="checkbox-label no-target-option"><input type="checkbox" checked={form.targetWeightKg === undefined} onChange={(event) => { onUpdate("targetWeightKg", event.target.checked ? undefined : form.weightKg); if (event.target.checked) onSliderValidity("targetWeight", null); }} />No target weight</label>
           {form.targetWeightKg !== undefined && <div className="wide-field"><NumericSlider showSlider={false} label="Target weight" value={form.targetWeightKg} min={20} max={400} step={0.5} unit="kg" onChange={(value) => onUpdate("targetWeightKg", value)} onValidityChange={(error) => onSliderValidity("targetWeight", error)} /></div>}
@@ -203,7 +204,7 @@ function DataUseStep({ form, privacy, guestMode, onlineAiAvailable, onUpdatePriv
   const onlineAiText = guestMode
     ? "Online AI is unavailable in guest mode. Sign in or create an account to enable it. Local guidance still works."
     : onlineAiAvailable
-      ? "Available. Saving the profile does not wait for it. Names and email are not sent."
+      ? "Available. Chat can use your optional name and relevant wellness data. Email and credentials are excluded."
       : "Not configured. Local guidance remains available.";
   return (
     <fieldset>

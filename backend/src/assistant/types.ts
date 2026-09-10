@@ -1,6 +1,23 @@
 export interface ChatSection {
   title: string;
   lines: string[];
+  details?: string[];
+  ordered?: boolean;
+  kind?: "metrics" | "progress" | "plan" | "recipe" | "nutrition" | "wellness";
+}
+
+export type ReplyMode = "concise" | "detailed";
+export interface ChatReference {
+  topic: "health" | "goals" | "progress" | "meal" | "recipe" | "nutrition" | "wellness";
+  date?: string;
+  mealType?: "breakfast" | "lunch" | "dinner" | "snack";
+  recipeId?: string;
+  servings?: number;
+  period?: "today" | "week" | "month" | "last_month";
+  metric?: "weight" | "bmi" | "wellness_score" | "activity";
+  metrics?: Array<"weight" | "bmi" | "wellness_score" | "activity" | "height" | "fitness">;
+  wellnessTopic?: "sleep" | "activity" | "stretching" | "hydration" | "stress";
+  view?: "summary" | "trend" | "recipe" | "nutrition";
 }
 
 export interface ChatReply {
@@ -15,6 +32,8 @@ export interface ChatTurn {
   message: string;
   reply: ChatReply;
   createdAt: string;
+  mode?: ReplyMode;
+  reference?: ChatReference;
 }
 
 export interface ToolCall {
@@ -27,6 +46,8 @@ export interface ToolResult {
   ok: boolean;
   code?: "invalid_arguments" | "not_found" | "unavailable";
   section: ChatSection;
+  sections?: ChatSection[];
+  reference?: ChatReference;
 }
 
 export interface ModelMessage {
@@ -43,7 +64,7 @@ export interface ModelResult {
 }
 
 export interface ChatProvider {
-  complete(messages: ModelMessage[], allowTools: boolean, signal: AbortSignal, requireTools?: boolean): Promise<ModelResult>;
+  complete(messages: ModelMessage[], allowTools: boolean, signal: AbortSignal, requireTools?: boolean, options?: { toolName?: string; mode?: ReplyMode }): Promise<ModelResult>;
 }
 
 export class ChatError extends Error {

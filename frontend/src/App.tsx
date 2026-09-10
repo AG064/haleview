@@ -14,6 +14,7 @@ import {
   getAuthConfig,
   getProfile,
   loginAccount,
+  logoutAccount,
   refreshAccountSession,
   refreshRecommendations,
   registerAccount,
@@ -479,6 +480,7 @@ function App() {
 
   const validateProfileStep = (step: number): string | null => {
     if (step === 0) {
+      if (form.displayName?.trim() && (form.displayName.trim().length > 60 || !/^[\p{L}\p{M}][\p{L}\p{M} .'\u2019-]*$/u.test(form.displayName.trim()))) return "Name must contain letters, spaces, apostrophes or hyphens.";
       const sliderError = Object.values(sliderErrors)[0];
       if (sliderError) return sliderError;
       if (!Number.isInteger(form.age) || form.age < 1 || form.age > 120) return "Enter an age from 1 to 120.";
@@ -816,13 +818,18 @@ function App() {
     }
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    const token = accessTokenRef.current;
     clearGuestSession();
     guestVisitRef.current += 1;
     setForm(initialForm);
     clearAccountSession("Signed out.");
     setEntryView("access");
     window.history.replaceState({}, document.title, "/access");
+    if (token) {
+      try { await logoutAccount(token); }
+      catch { setAccountMessage("Signed out on this device. The server could not be reached to end the remote session."); }
+    }
   };
 
   const continueAsGuest = () => {

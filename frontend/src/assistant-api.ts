@@ -4,16 +4,17 @@ export interface ChatTurn {
   id: string;
   message: string;
   createdAt: string;
+  mode?: "concise" | "detailed";
   reply: {
     text: string;
-    sections: Array<{ title: string; lines: string[] }>;
+    sections: Array<{ title: string; lines: string[]; ordered?: boolean; kind?: string }>;
     source: "deepseek" | "local";
     notice: string | null;
   };
 }
 
-async function chatRequest<T>(token: string, method = "GET", body?: unknown): Promise<T> {
-  const response = await fetch("/api/assistant", {
+async function chatRequest<T>(token: string, method = "GET", body?: unknown, before?: string): Promise<T> {
+  const response = await fetch(`/api/assistant${before ? `?before=${encodeURIComponent(before)}` : ""}`, {
     method,
     headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
@@ -25,6 +26,8 @@ async function chatRequest<T>(token: string, method = "GET", body?: unknown): Pr
   return response.json() as Promise<T>;
 }
 
-export const loadChat = (token: string) => chatRequest<{ turns: ChatTurn[]; online: boolean }>(token);
-export const sendChat = (message: string, requestId: string, token: string) => chatRequest<{ turn: ChatTurn }>(token, "POST", { message, requestId });
+interface ChatPage { turns: ChatTurn[]; online: boolean; hasEarlier: boolean }
+export const loadChat = (token: string) => chatRequest<ChatPage>(token);
+export const loadEarlierChat = (before: string, token: string) => chatRequest<ChatPage>(token, "GET", undefined, before);
+export const sendChat = (message: string, requestId: string, token: string, mode: "concise" | "detailed" = "concise") => chatRequest<{ turn: ChatTurn }>(token, "POST", { message, requestId, mode });
 export const clearChat = (token: string) => chatRequest<{ message: string }>(token, "DELETE");

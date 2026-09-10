@@ -12,6 +12,7 @@ import {
   disableTwoFactor,
   getLatestEmail,
   login,
+  logoutSession,
   refresh,
   register,
   requestPasswordReset,
@@ -39,7 +40,7 @@ import { beginOAuth, completeOAuth, exchangeOAuthTicket, oauthProviderStatus } f
 import { createNutritionRouter } from "./nutrition/routes.js";
 import { exportNutritionData } from "./nutrition/export.js";
 import { createAssistantRouter } from "./assistant/routes.js";
-import { getChatHistory } from "./assistant/store.js";
+import { exportChatHistory } from "./assistant/store.js";
 const app = express();
 
 app.disable("x-powered-by");
@@ -104,6 +105,13 @@ app.post("/api/auth/refresh", (request, response) => {
   } catch (error) {
     sendAuthError(error, response);
   }
+});
+
+app.post("/api/auth/logout", (request, response) => {
+  try {
+    logoutSession(request.headers.authorization);
+    response.json({ message: "Signed out." });
+  } catch (error) { sendAuthError(error, response); }
 });
 
 app.post("/api/auth/password-reset/request", async (request, response) => {
@@ -354,7 +362,7 @@ app.get("/api/profile/export", authMiddleware, (request, response) => {
   response
     .type("application/json")
     .setHeader("Content-Disposition", 'attachment; filename="health-profile.json"')
-    .send(JSON.stringify({ ...exportData(userId), nutrition: exportNutritionData(userId), conversations: getChatHistory(userId) }, null, 2));
+    .send(JSON.stringify({ ...exportData(userId), nutrition: exportNutritionData(userId), conversations: exportChatHistory(userId) }, null, 2));
 });
 
 const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {

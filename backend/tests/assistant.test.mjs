@@ -54,7 +54,7 @@ test("tool validation rejects extra identity, unknown tools, invalid metrics and
     ["get_health_metrics", {}], ["get_health_metrics", {metrics: ["weight", "weight"]}],
     ["get_health_metrics", {metrics: ["email"]}], ["get_health_metrics", null],
     ["get_health_goals", {admin: true}], ["get_all_users", {}],
-    ["get_meal_plan", {date: "2026-02-30"}], ["get_meal_plan", {date: "yesterday"}],
+    ["get_meal_plan", {date: "2026-02-30"}], ["get_meal_plan", {date: "not-a-date"}],
     ["get_nutrition_intake", {period: "forever"}],
   ]) assert.equal(executeAssistantTool(1001, name, args, now).code, "invalid_arguments");
   assert.throws(() => executeAssistantTool(0, "get_health_goals", {}, now));
@@ -192,7 +192,7 @@ test("PII requests and medical concerns do not reach the provider", async () => 
 test("simultaneous messages for one account are rejected without mixing context", async () => {
   let release;
   const provider = {complete: () => new Promise(resolve => { release = () => resolve(completion("Hello. What would you like to check?")); })};
-  const pending = sendChatMessage(1001, input("Hello"), {provider, now});
+  const pending = sendChatMessage(1001, input("How can I improve my sleep?"), {provider, now});
   await assert.rejects(sendChatMessage(1001, input("Second message"), {provider: null, now}), error => error.status === 409);
   release();
   await pending;
@@ -231,7 +231,7 @@ test("DeepSeek transport retains call identifiers, validates responses and never
     const provider = createChatProvider(async (_url, init) => {
       const body = JSON.parse(init.body);
       assert.equal(body.model, "fixture-model");
-      assert.equal(body.tools.length, 4);
+      assert.equal(body.tools.length, 7);
       assert.equal(body.thinking.type, "disabled");
       assert.equal(body.temperature, 0.2);
       assert.equal(body.tool_choice, "required");
