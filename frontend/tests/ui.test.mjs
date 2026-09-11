@@ -13,7 +13,7 @@ await build({
   stdin: {contents: `
     export {createElement} from "react";
     export {renderToStaticMarkup} from "react-dom/server";
-    export {AppShell} from "./components/AppShell";
+    export {AppShell, DashboardNavigation} from "./components/AppShell";
     export {PageDataState} from "./components/PageDataState";
     export {ProfileSetupScreen} from "./screens/ProfileSetupScreen";
     export {DashboardOverview, HaleScreen} from "./screens/DashboardScreens";
@@ -61,6 +61,25 @@ test("Hale has one labelled navigation entry and only the correct page is active
     const themeButton = html.match(/<button class="theme-toggle"[^>]*>.*?<\/button>/)?.[0];
     assert.ok(themeButton?.includes('aria-label="Switch to dark mode"'));
     assert.ok(!themeButton.includes("<span>"));
+  } finally { globalThis.document = previousDocument; }
+});
+
+test("dashboard navigation uses a three-position segmented control", () => {
+  const html = render(ui.DashboardNavigation, {route: "records", onNavigate: () => {}});
+  assert.ok(html.includes('class="dashboard-tabs segmented-switch"'));
+  assert.ok(html.includes('data-segments="3"'));
+  assert.ok(html.includes('data-index="2"'));
+  assert.equal((html.match(/<button/g) ?? []).length, 3);
+  assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
+});
+
+test("app shell exposes an accessible collapsed main menu control", () => {
+  const previousDocument = globalThis.document;
+  globalThis.document = {documentElement: {dataset: {theme: "light"}}};
+  try {
+    const html = render(ui.AppShell, {route: "dashboard", hasProfile: true, guestMode: false, signedIn: true});
+    assert.ok(html.includes('id="main-navigation"'));
+    assert.match(html, /aria-controls="main-navigation" aria-expanded="false" aria-label="Open main menu"/);
   } finally { globalThis.document = previousDocument; }
 });
 
