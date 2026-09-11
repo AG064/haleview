@@ -22,7 +22,6 @@ export function AppShell({ route, hasProfile, guestMode, signedIn, onNavigate, o
         <div className="product-name">
           <h1>Haleview</h1>
           <span>Health and progress</span>
-          <button className="text-button guide-button button-with-icon" type="button" aria-label="Open guide" title="Open guide" onClick={onOpenTutorial}><BookOpen aria-hidden="true" /><span>Guide</span></button>
         </div>
         <nav className="main-tabs" aria-label="Main pages">
           <NavButton icon={LayoutDashboard} active={isDashboardRoute(route) && route !== "hale"} disabled={!hasProfile} title={setupTitle} onClick={() => onNavigate("dashboard")}>Dashboard</NavButton>
@@ -35,6 +34,7 @@ export function AppShell({ route, hasProfile, guestMode, signedIn, onNavigate, o
           <NavButton icon={Settings} active={route === "settings"} disabled={!hasProfile} title={setupTitle} onClick={() => onNavigate("settings")}>Settings</NavButton>
         </nav>
         <div className="top-account">
+          <button className="text-button guide-button button-with-icon" type="button" aria-label="Open guide" title="Open guide" onClick={onOpenTutorial}><BookOpen aria-hidden="true" /><span>Guide</span></button>
           <ThemeToggle />
           {guestMode ? (
             <>
