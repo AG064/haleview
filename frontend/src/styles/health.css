@@ -833,10 +833,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   width: fit-content;
   gap: 3px;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: var(--panel);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .hale-view-tab {
@@ -860,9 +860,10 @@
 }
 
 .hale-view-tab[aria-selected="true"] {
-  border-color: var(--line);
+  border-color: transparent;
   color: var(--ink);
-  background: var(--accent-soft);
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .hale-view-tab > svg {
