@@ -186,7 +186,10 @@ export function HaleChat({ request }: { request: SessionRequest }) {
                 if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); }
               }} />
             <div className="hale-chat-composer-controls">
-              <label className="hale-chat-detail-label" htmlFor="hale-chat-detail">Detail<select id="hale-chat-detail" value={mode} disabled={busy || loading} onChange={(event) => setMode(event.target.value as "concise" | "detailed")}><option value="concise">Concise</option><option value="detailed">Detailed</option></select></label>
+              <div className="hale-chat-detail-toggle" role="group" aria-label="Reply detail" data-mode={mode}>
+                <button type="button" aria-pressed={mode === "concise"} disabled={busy || loading} onClick={() => setMode("concise")}>Concise</button>
+                <button type="button" aria-pressed={mode === "detailed"} disabled={busy || loading} onClick={() => setMode("detailed")}>Detailed</button>
+              </div>
               <div className="hale-chat-composer-actions"><span id="hale-chat-count">{message.length} / 2000</span><button type="submit" className="hale-chat-send" disabled={busy || loading || loadError || !message.trim()} aria-busy={busy} aria-label={pending ? "Sending message" : "Send message"}><Send aria-hidden="true" /></button></div>
             </div>
           </div>
