@@ -38,7 +38,8 @@
 .app-shell .wizard-step:hover { background: var(--surface); border-color: var(--color-border); color: var(--ink); }
 .app-shell .wizard-step.current { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
 .app-shell .wizard-step.current > span { background: var(--accent); color: var(--on-accent); border-color: transparent; }
-.app-shell :is(.main-tabs, .dashboard-tabs) > button.active { background: var(--accent-soft); color: var(--ink); }
+.app-shell .main-tabs > button.active { background: transparent; color: var(--accent); }
+.app-shell .dashboard-tabs > button.active { background: var(--accent-soft); color: var(--ink); }
 .app-shell :is(.main-tabs, .dashboard-tabs) > button:disabled { color: var(--control-disabled-text); background: transparent; }
 
 .app-shell .optional-section { padding: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; opacity: 1; margin-top: 24px; }
