@@ -36,13 +36,16 @@
 }
 
 .theme-toggle {
-  display: inline-flex;
+  display: grid;
+  place-items: center;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  gap: 8px;
-  min-height: 44px;
-  padding: 10px 12px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--surface);
@@ -51,7 +54,7 @@
   font-weight: 600;
   cursor: pointer;
 }
-.theme-toggle svg { width: 18px; height: 18px; }
+.theme-toggle svg { width: 17px; height: 17px; }
 .theme-toggle:hover { background: var(--accent-soft); }
 .theme-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .overview-account { display: flex; align-items: center; gap: 20px; }
@@ -95,7 +98,6 @@ input, select, textarea { transition: box-shadow 150ms ease; }
   .main-tabs button { flex: 1 0 auto; }
 }
 @media (max-width: 520px) {
-  .top-account { width: 100%; justify-content: flex-start; gap: 12px; flex-wrap: wrap; }
+  .top-account { justify-content: flex-start; gap: 6px; }
   .overview-account { gap: 12px; }
-  .theme-toggle { padding: 8px 10px; }
 }

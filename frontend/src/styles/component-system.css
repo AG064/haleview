@@ -23,7 +23,7 @@
 :is(button, a, input, select, textarea, summary):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; box-shadow: none; }
 .app-shell .app-accordion > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 
-:is(.app-shell, .access-screen, .overview-screen) :is(.primary-button, .secondary-button, .compact-button, .theme-toggle) { min-height: var(--control-height); border-radius: var(--control-radius); font-size: 0.9375rem; font-weight: 600; line-height: 1.4; }
+:is(.app-shell, .access-screen, .overview-screen) :is(.primary-button, .secondary-button, .compact-button) { min-height: var(--control-height); border-radius: var(--control-radius); font-size: 0.9375rem; font-weight: 600; line-height: 1.4; }
 .primary-button, .app-shell .primary-button { background: var(--accent); color: var(--on-accent); border-color: transparent; }
 .primary-button:hover:not(:disabled), .app-shell .primary-button:hover:not(:disabled) { background: var(--accent-dark); color: var(--on-accent); transform: none; }
 .secondary-button, .app-shell .secondary-button { background: transparent; color: var(--ink); border-color: var(--color-border); }

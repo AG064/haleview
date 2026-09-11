@@ -58,6 +58,9 @@ test("Hale has one labelled navigation entry and only the correct page is active
     assert.equal((html.match(/<span>Hale<\/span>/g) ?? []).length, 1);
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
     assert.ok(html.includes("hale-nav"));
+    const themeButton = html.match(/<button class="theme-toggle"[^>]*>.*?<\/button>/)?.[0];
+    assert.ok(themeButton?.includes('aria-label="Switch to dark mode"'));
+    assert.ok(!themeButton.includes("<span>"));
   } finally { globalThis.document = previousDocument; }
 });
 
@@ -82,6 +85,8 @@ test("Hale separates chat and guidance into accessible views with chat selected 
   const guidanceTab = html.match(/<button[^>]*id="hale-guidance-tab"[^>]*>/)?.[0];
   assert.ok(chatTab?.includes('aria-selected="true"') && chatTab.includes('tabindex="0"'));
   assert.ok(guidanceTab?.includes('aria-selected="false"') && guidanceTab.includes('tabindex="-1"'));
+  assert.ok(!html.includes("Ask Hale about your saved data"));
+  assert.ok(!html.includes("Review your current priorities"));
   assert.match(html, /aria-labelledby="hale-chat-tab"[^>]*id="hale-chat-panel"[^>]*role="tabpanel"/);
   assert.match(html, /aria-labelledby="hale-guidance-tab"[^>]*hidden=""[^>]*id="hale-guidance-panel"[^>]*role="tabpanel"/);
 });

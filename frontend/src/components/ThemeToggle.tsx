@@ -17,11 +17,10 @@ export function ThemeToggle() {
   }, []);
 
   const next = theme === "dark" ? "light" : "dark";
-  return <button className="theme-toggle" type="button" aria-label={`Switch to ${next} mode`} onClick={() => {
+  return <button className="theme-toggle" type="button" aria-label={`Switch to ${next} mode`} title={`Switch to ${next} mode`} onClick={() => {
     saveTheme(next);
     setTheme(next);
   }}>
     {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
-    <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
   </button>;
 }
