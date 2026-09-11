@@ -4,6 +4,20 @@ export interface ChatSection {
   details?: string[];
   ordered?: boolean;
   kind?: "metrics" | "progress" | "plan" | "recipe" | "nutrition" | "wellness";
+  chart?: ChatChart;
+}
+
+export interface ChatChart {
+  type: "line" | "bar" | "pie";
+  title: string;
+  unit: string;
+  description: string;
+  items: Array<{ label: string; value: number; detail?: string }>;
+}
+
+export interface ChatSuggestion {
+  label: string;
+  prompt: string;
 }
 
 export type ReplyMode = "concise" | "detailed";
@@ -25,6 +39,7 @@ export interface ChatReply {
   sections: ChatSection[];
   source: "deepseek" | "local";
   notice: string | null;
+  suggestions?: ChatSuggestion[];
 }
 
 export interface ChatTurn {

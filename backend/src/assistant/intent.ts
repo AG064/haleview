@@ -27,7 +27,7 @@ export function suggestedTools(message: string, history: ChatTurn[], today: stri
   const explicitDate = text.match(/\b\d{4}-\d{2}-\d{2}\b/u)?.[0];
   let date = explicitDate ?? (text.includes("tomorrow") ? "tomorrow" : text.includes("yesterday") ? "yesterday" : followUp && previous?.date ? previous.date : "today");
   const period = /last month/u.test(text) ? "last_month" : /month/u.test(text) ? "month" : /week/u.test(text) ? "week" : "today";
-  const nutrients = /\b(nutrients?|nutrition|protein|calories|macros?|carbohydrates?|carbs?|fat|fats|intake|eaten|consumed)\b/u.test(text);
+  const nutrients = /\b(nutrients?|nutrition|protein|calories|macros?|macronutrients?|carbohydrates?|carbs?|fat|fats|intake|eaten|consumed)\b/u.test(text);
   const preparation = /\b(recipe|ingredients?|prepare|preparation|cook|cooking|instructions?|steps?)\b/u.test(text);
   const recipeId = text.match(/\b(recipe-[a-z0-9._-]+|[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})\b/u)?.[0];
   if (mealType && (preparation || nutrients || followUp)) return [{ name: "get_recipe", args: { date, mealType, view: nutrients && !preparation ? "nutrition" : "recipe" } }];
@@ -35,14 +35,21 @@ export function suggestedTools(message: string, history: ChatTurn[], today: stri
   if (previous?.topic === "recipe" && mealReference && (nutrients || preparation)) return referenceCall(previous).map((call) => ({ ...call, args: { ...call.args, view: nutrients && !preparation ? "nutrition" : "recipe" } }));
 
   const results: SuggestedCall[] = [];
+  const visualRequest = /\b(chart|graph|plot|visuali[sz]e|visualisation|visualization)\b/u.test(text)
+    || /\b(show|display|draw)\b.{0,60}\b(trend|compar(?:e[sd]?|ison)|breakdown)\b/u.test(text);
+  const visualization = visualRequest && /\bweight\b/u.test(text) ? "line"
+    : visualRequest && /\b(macros?|macronutrients?|breakdown)\b/u.test(text) ? "pie"
+      : visualRequest && /\bprotein\b/u.test(text) ? "bar" : undefined;
   const trend = /\b(trend|changed?|progress|plateau|history|historical|lost|gained|improving)\b/u.test(text)
-    || /\b(weight|fitness|wellness|activity)\b/u.test(text) && /\b(week|month)\b/u.test(text);
-  const target = /\b(goals?|target weight|my target|how close|preferences|restrictions|my name)\b/u.test(text);
-  if (trend && (nutrients || followUp && previous?.topic === "nutrition")) {
-    results.push({ name: "get_nutrition_intake", args: { period: period === "today" ? previous?.period ?? "week" : period, view: "trend" } });
+    || /\b(weight|fitness|wellness|activity)\b/u.test(text) && (/\b(week|month)\b/u.test(text) || visualRequest);
+  const target = /\b(goals?|target weight|my target|how close|preferences|restrictions|my name)\b/u.test(text)
+    && !(/\b(protein|calories|carbohydrates?|carbs?|fat|macros?|macronutrients?)\b/u.test(text) && /\btarget\b/u.test(text));
+  const explicitHealthTrend = /\b(weight|bmi|wellness|score|activity|fitness)\b/u.test(text);
+  if (trend && (nutrients || followUp && previous?.topic === "nutrition" && !explicitHealthTrend)) {
+    results.push({ name: "get_nutrition_intake", args: { period: period === "today" ? previous?.period ?? "week" : period, view: "trend", ...(visualization === "bar" || visualization === "pie" ? { visualization } : {}) } });
   } else if (trend && !/how close/u.test(text)) {
     const metric = /\b(activity|fitness|active)\b/u.test(text) ? "activity" : /\bbmi\b/u.test(text) ? "bmi" : /\b(wellness|score)\b/u.test(text) ? "wellness_score" : followUp && previous?.metrics?.includes("bmi") && !previous.metrics.includes("weight") ? "bmi" : "weight";
-    results.push({ name: "get_health_progress", args: { metric, period: period === "today" ? "month" : period } });
+    results.push({ name: "get_health_progress", args: { metric, period: period === "today" ? "month" : period, ...(visualization === "line" ? { visualization } : {}) } });
   } else {
     const metrics: string[] = [];
     if (/\bweight\b/u.test(text) && !/target weight|how close/u.test(text)) metrics.push("weight");
@@ -62,7 +69,7 @@ export function suggestedTools(message: string, history: ChatTurn[], today: stri
     }
     results.push({ name: "get_meal_plan", args: { date, days: /\bweek\b/u.test(text) ? 7 : 1, ...(explicitMeal ? { mealType: explicitMeal } : {}) } });
   }
-  if (nutrients && !results.some((call) => call.name === "get_nutrition_intake")) results.push({ name: "get_nutrition_intake", args: { period } });
+  if (nutrients && !results.some((call) => call.name === "get_nutrition_intake")) results.push({ name: "get_nutrition_intake", args: { period, ...(visualization === "bar" || visualization === "pie" ? { visualization } : {}) } });
   const wellnessTopic = /\bsleep|bedtime|insomnia/u.test(text) ? "sleep" : /\bstretch/u.test(text) ? "stretching"
     : /\bhydrat|\bwater\b|\bfluids\b/u.test(text) ? "hydration" : /\bstress|relax|anxious/u.test(text) ? "stress"
       : /\bexercise|\bworkout|\bmove more/u.test(text) && !trend && !target ? "activity" : undefined;

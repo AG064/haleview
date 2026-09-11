@@ -12,6 +12,8 @@ The application is not a medical service. Check health advice before using it.
 
 Open Hale after completing your profile. You can ask about health metrics, progress, meal plans, recipe ingredients and preparation, recorded nutrition, or general wellness. For example, ask "What nutrients are in my breakfast?" and then "Is that enough protein?". The follow-up stays attached to that breakfast. Existing guidance remains below the conversation.
 
+Hale can draw three conversational charts from saved data. Ask "Show me my weight trend this month" for a line chart, "Show how my protein intake compares with my target today" for a bar chart, or "Show the breakdown of my macronutrients today" for a pie chart. A protein or weight discussion can offer a related chart prompt without opening one automatically.
+
 Choose Concise or Detailed before sending. Both modes show the same core facts. Detailed replies add context, limitations and supporting records. Full recipe requests include the ingredient list and ordered preparation steps in either mode. Add an optional Name for Hale under Profile's optional details if you want personal replies.
 
 ### Conversation and data access
@@ -24,13 +26,13 @@ The seven read-only functions are:
 | --- | --- |
 | get_health_metrics | Current weight, BMI, height, activity, fitness and wellness components, or exact records for a specified date |
 | get_health_goals | Chosen name, fitness and weight goals, distance to the target, exercise and dietary preferences |
-| get_health_progress | Recorded weight, BMI, health-score or activity changes, including dates, differences and missing-data limits |
+| get_health_progress | Recorded weight, BMI, health-score or activity changes, including dates, differences, missing-data limits and an optional line chart |
 | get_meal_plan | A daily or seven-day meal plan, optionally restricted to breakfast, lunch, dinner or snack |
 | get_recipe | A planned or own saved recipe's scaled ingredients, preparation and nutritional contribution |
-| get_nutrition_intake | Recorded intake versus targets, dietary suggestions and trends across logged dates |
+| get_nutrition_intake | Recorded intake versus targets, dietary suggestions, trends, protein bar charts and macro pie charts |
 | get_wellness_guidance | General guidance on sleep, activity, gentle stretching, hydration and stress |
 
-A message is added to recent context, the model selects a function, arguments are validated before retrieval, and the result is returned with its function-call identifier. Hale then produces a brief explanation. The application renders exact figures, comparisons, ingredients and steps from backend-produced sections. Completed turns are saved and returned to the browser. Recognized personal-data requests require function use; one recognized request can also require the specific relevant function.
+A message is added to recent context, the model selects a function, arguments are validated before retrieval, and the result is returned with its function-call identifier. Hale then produces a brief explanation. The application renders exact figures, comparisons, chart points, ingredients and steps from backend-produced sections. Completed turns are saved and returned to the browser. Recognized personal-data requests require function use; one recognized request can also require the specific relevant function.
 
 The assistant cannot update health data, meals or account settings. Email, date of birth, age, credentials, account identifiers and other users' records are excluded from chat tool payloads. Private recipes require ownership even when a caller knows the recipe identifier. Numbers and target comparisons are calculated by the existing health and nutrition modules. Planned food remains distinct from recorded consumption. A meal's protein is shown as a contribution to the daily target, not as a whole day's intake.
 
@@ -44,7 +46,7 @@ Online chat reuses the configured DeepSeek provider and the Online AI consent se
 
 A request allows at most two tool rounds, a final response and one format repair within a shared 55-second deadline. Context size and total returned token usage are bounded. The backend stores provider token totals with the turn for inspection. One account can have one active reply, and the service caps simultaneous active accounts.
 
-Conversation history is encrypted at rest and retained until the account clears it. The browser initially loads forty turns and can load earlier messages. Personal data export includes the full conversation. The provider receives the last five turns and the latest server-owned topic/meal reference, with bounded field lengths and valid JSON. Loading earlier messages does not expand the provider context. Automatic summarization and dynamic topic compression are not implemented.
+Conversation history is encrypted at rest and retained until the account clears it. The browser initially loads forty turns and can load earlier messages. Personal data export includes the full conversation. The provider receives up to five full previous turns, using the latest two and the most recent turns related to the current topic. Older turns are compacted when ten turns accumulate or when the pending context reaches a size or provider-token threshold. The deterministic summary keeps bounded user-stated preferences and the latest server-owned reference for each topic. It does not copy earlier measurements because current values are retrieved again. Less relevant topics are reduced to topic labels, while the current topic keeps its compact reference and detailed recent turns. Loading earlier messages does not expand provider context. The summary is encrypted and is removed with chat history.
 
 ### Errors and boundaries
 
@@ -54,7 +56,7 @@ The assistant blocks contact details and credential-like text, keeps retrieved t
 
 Sign-out revokes the server session and its refresh-token lineage. Password reset revokes all account sessions. Chat checks authorization again after provider requests, so a reply that finishes after sign-out is not saved or returned. Separate signed-in sessions are not ended by a normal sign-out on one device. If the server cannot be reached, the interface states that only the local session was cleared.
 
-Chat chart generation, proactive chart suggestions, automatic history compression and dynamic context detail are not included yet. Existing Progress and Nutrition charts remain available.
+Line charts use recorded metric dates and values without filling missing dates. Protein bar charts compare recorded grams with the saved target for the same period. Macro pie charts show calculated energy shares using four kilocalories per gram for protein and carbohydrate and nine for fat. Every chart includes its source values as accessible text. The model cannot supply chart values.
 
 This variation uses the haleview-platform Compose project name and ports 29450/29451, separate from earlier review deployments. Do not attach an earlier project's data volume to this variation.
 ## Repository variations
@@ -318,6 +320,8 @@ The required canonical names `nutrition.calories`, `carbs`, `protein`, and `fats
 
 Nutrition preferences contain diet choices, allergies, disliked ingredients, cuisine choices, calorie and macro targets, meal and snack counts, meal times, timezone, and `effectiveFrom`. The backend stores the current version and up to 50 earlier versions per account.
 
+Assistant turns contain the encrypted user message, structured reply, optional chart and server-owned reference. A separate encrypted context summary stores bounded conversational preferences and topic references for older turns. Clearing chat removes both records.
+
 Meal plans contain an identifier, duration, ISO start and end dates, timezone, source, generation step names, days, meals, daily nutrition and review, and plan totals. Each meal has local date/time and an ISO `scheduledAt` value. Calculated plan insights contain a balance score, diversity index, micronutrient coverage, protein consistency, fibre trend, and sugar trend. Each saved edit creates a version. Shopping lists contain grouped catalogue items with quantities and checked state. Intake records contain an ISO date and time, source, meal details, and calculated nutrition.
 
 Community records contain a recipe subject, one to five stars, helpful state, decision, optional review, moderation state, and ISO creation time. Community aggregates contain rating count, average stars, helpful counts, a rank score, and verified state.
@@ -367,6 +371,6 @@ npm run build
 
 The backend build copies the catalogue into its output directory. Tests use temporary databases and mocked provider responses; they do not need an API key, external account, or a running application. Temporary test data is removed after each test process.
 
-Backend tests cover catalogue contracts, ingredient and recipe retrieval, preference reuse, nutrition function validation, daily and weekly plans, changes and restore, shopping lists, cooking-state validation, authentication boundaries, intake ownership, provider timeouts and errors, and cache recovery. Frontend tests cover pending and failed loads, the Hale navigation entry, guest AI controls, escaped error messages, ISO dates, and the Combine icon. These tests complement manual browser checks; they do not prove that every generated cooking instruction is correct.
+Backend tests cover catalogue contracts, ingredient and recipe retrieval, preference reuse, nutrition function validation, daily and weekly plans, changes and restore, shopping lists, cooking-state validation, authentication boundaries, intake ownership, chart source values, context compression, topic selection, provider timeouts and errors, and cache recovery. Frontend tests cover pending and failed loads, the Hale navigation entry, guest AI controls, escaped error messages, ISO dates, chart accessibility, and the Combine icon. These tests complement manual browser checks; they do not prove that every generated cooking instruction is correct.
 
 GitHub Actions runs the same Docker checks for main-branch changes and pull requests, using read-only repository permissions and no provider credentials.

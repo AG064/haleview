@@ -7,10 +7,27 @@ export interface ChatTurn {
   mode?: "concise" | "detailed";
   reply: {
     text: string;
-    sections: Array<{ title: string; lines: string[]; ordered?: boolean; kind?: string }>;
+    sections: ChatSection[];
     source: "deepseek" | "local";
     notice: string | null;
+    suggestions?: Array<{ label: string; prompt: string }>;
   };
+}
+
+export interface ChatChart {
+  type: "line" | "bar" | "pie";
+  title: string;
+  unit: string;
+  description: string;
+  items: Array<{ label: string; value: number; detail?: string }>;
+}
+
+export interface ChatSection {
+  title: string;
+  lines: string[];
+  ordered?: boolean;
+  kind?: string;
+  chart?: ChatChart;
 }
 
 async function chatRequest<T>(token: string, method = "GET", body?: unknown, before?: string): Promise<T> {

@@ -18,6 +18,7 @@ await build({
     export {ProfileSetupScreen} from "./screens/ProfileSetupScreen";
     export {DashboardOverview} from "./screens/DashboardScreens";
     export {CombineRecipeIcon} from "./components/CombineRecipeIcon";
+    export {HaleChatChart} from "./components/HaleChatChart";
     export {initialForm, initialPrivacy} from "./app-data";
     export {displayDate, displayDateOnly, localDateTimeValue} from "./format";
   `, resolveDir: fileURLToPath(new URL("../src/", import.meta.url)), loader: "tsx"},
@@ -85,4 +86,15 @@ test("Combine uses a scalable decorative SVG rather than a text character", () =
   assert.ok(html.includes('viewBox="0 0 24 24"'));
   assert.ok(html.includes('aria-hidden="true"'));
   assert.equal((html.match(/<circle /g) ?? []).length, 2);
+});
+
+test("Hale renders line, bar and pie chart values as accessible text", () => {
+  for(const type of ["line","bar","pie"]){
+    const html=render(ui.HaleChatChart,{chart:{type,title:`${type} example`,unit:"g",description:"Saved values",items:[{label:"Recorded",value:31,detail:"31 g"},{label:"Target",value:100,detail:"100 g"}]}});
+    assert.ok(html.includes(`${type} example`));
+    assert.ok(html.includes("Saved values"));
+    assert.ok(html.includes("Recorded"));
+    assert.ok(html.includes("31 g"));
+    assert.ok(html.includes('role="img"'));
+  }
 });
