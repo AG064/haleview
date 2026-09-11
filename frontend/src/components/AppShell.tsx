@@ -34,8 +34,8 @@ export function AppShell({ route, hasProfile, guestMode, signedIn, onNavigate, o
           <NavButton icon={Settings} active={route === "settings"} disabled={!hasProfile} title={setupTitle} onClick={() => onNavigate("settings")}>Settings</NavButton>
         </nav>
         <div className="top-account">
-          <ThemeToggle />
           <button className="text-button guide-button button-with-icon" type="button" aria-label="Open guide" title="Open guide" onClick={onOpenTutorial}><BookOpen aria-hidden="true" /><span>Guide</span></button>
+          <ThemeToggle />
           {guestMode ? (
             <>
             <span className="account-label"><CircleUserRound aria-hidden="true" /><span>Guest</span></span>

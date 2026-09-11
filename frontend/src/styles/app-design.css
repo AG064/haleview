@@ -1,14 +1,18 @@
 .app-shell { width: min(1280px, calc(100% - 64px)); padding-top: 28px; }
 .app-shell .topbar { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; align-items: center; gap: 12px; padding-bottom: 18px; }
 .app-shell .product-name { grid-column: 1; grid-row: 1; align-items: center; min-height: 36px; }
-.app-shell .top-account { grid-column: 3; grid-row: 1; align-items: center; justify-content: flex-end; width: auto; min-height: 36px; gap: 6px; flex-wrap: nowrap; }
+.app-shell .top-account { position: relative; grid-column: 3; grid-row: 1; align-items: center; justify-content: flex-end; width: auto; min-height: 36px; gap: 8px; flex-wrap: nowrap; }
 .app-shell .main-tabs { grid-column: 2; grid-row: 1; align-items: center; justify-content: center; width: auto; min-width: 0; padding: 0; border-radius: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; background: transparent; }
 .app-shell .main-tabs::-webkit-scrollbar { display: none; }
-.app-shell .main-tabs > button { min-height: 36px; flex: 0 0 auto; padding: 8px 9px; font-size: 0.72rem; }
+.app-shell .main-tabs > button { min-height: 36px; flex: 0 0 auto; padding: 8px; font-size: 0.72rem; }
 .app-shell .product-name h1 { font-size: 1.25rem; line-height: 1; }
 .app-shell .product-name { gap: 7px; white-space: nowrap; }
 .app-shell .guide-button { min-height: 36px; padding: 7px 8px !important; border-color: transparent; background: transparent; }
 .app-shell .top-account > .text-button { white-space: nowrap; }
+.app-shell .top-account::before { position: absolute; top: 50%; left: -7px; width: 1px; height: 20px; background: var(--line); content: ""; transform: translateY(-50%); }
+.app-shell .top-account :is(.guide-button, .theme-toggle, .account-label) { min-height: 36px; }
+.app-shell .top-account :is(.guide-button, .theme-toggle, .account-label) svg { width: 17px; height: 17px; }
+.app-shell :is(.guide-button, .theme-toggle):hover { color: var(--accent); background: transparent; }
 .app-shell .dashboard-tabs { margin-bottom: 28px; }
 .app-shell .dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .app-shell .dashboard-heading .dashboard-tabs { margin: 0; flex-shrink: 0; }
@@ -83,6 +87,7 @@
   .app-shell { width: calc(100% - 24px); padding-top: 16px; }
   .app-shell .topbar { grid-template-columns: max-content minmax(0, 1fr) max-content; gap: 7px; padding-bottom: 16px; }
   .app-shell .top-account { grid-column: 3; grid-row: 1; width: auto; gap: 4px; }
+  .app-shell .top-account::before { display: none; }
   .app-shell .main-tabs { grid-column: 2; grid-row: 1; }
   .app-shell .main-tabs > button { min-height: 36px; padding: 7px 8px; }
   .app-shell .product-name > span,
