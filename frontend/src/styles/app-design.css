@@ -2,12 +2,12 @@
 .app-shell .topbar { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; gap: 12px; padding-bottom: 18px; }
 .app-shell .product-name { grid-column: 1; grid-row: 1; }
 .app-shell .top-account { grid-column: 3; grid-row: 1; width: auto; gap: 6px; flex-wrap: nowrap; }
-.app-shell .main-tabs { grid-column: 2; grid-row: 1; width: auto; min-width: 0; padding: 3px; border-radius: 9px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; background: var(--panel); }
+.app-shell .main-tabs { grid-column: 2; grid-row: 1; width: auto; min-width: 0; padding: 0; border-radius: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; background: transparent; }
 .app-shell .main-tabs::-webkit-scrollbar { display: none; }
 .app-shell .main-tabs > button { min-height: 36px; flex: 0 0 auto; padding: 8px 9px; font-size: 0.72rem; }
 .app-shell .product-name h1 { font-size: 1.25rem; }
 .app-shell .product-name { gap: 7px; white-space: nowrap; }
-.app-shell .guide-button { min-height: 36px; padding: 7px 8px !important; }
+.app-shell .guide-button { min-height: 36px; padding: 7px 8px !important; border-color: transparent; background: transparent; }
 .app-shell .dashboard-tabs { margin-bottom: 28px; }
 .app-shell .dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .app-shell .dashboard-heading .dashboard-tabs { margin: 0; flex-shrink: 0; }

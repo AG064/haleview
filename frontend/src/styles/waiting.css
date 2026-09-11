@@ -2,15 +2,16 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  border: 1px solid var(--accent);
-  background: var(--color-surface-sage);
+  border: 0;
+  background: transparent;
   color: var(--ink);
   font-weight: 700;
-  box-shadow: 4px 0 0 var(--panel);
+  box-shadow: none;
 }
 .app-shell .main-tabs > .hale-nav[aria-current="page"] {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 .app-shell .main-tabs > .hale-nav svg { width: 21px; height: 21px; }
 .waiting-state {
