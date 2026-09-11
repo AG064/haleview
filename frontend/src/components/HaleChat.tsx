@@ -186,7 +186,7 @@ export function HaleChat({ request }: { request: SessionRequest }) {
                 if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); }
               }} />
             <div className="hale-chat-composer-controls">
-              <div className="hale-chat-detail-toggle" role="group" aria-label="Reply detail" data-mode={mode}>
+              <div className="hale-chat-detail-toggle segmented-switch" role="group" aria-label="Reply detail" data-mode={mode} data-index={mode === "concise" ? "0" : "1"} data-segments="2">
                 <button type="button" aria-pressed={mode === "concise"} disabled={busy || loading} onClick={() => setMode("concise")}>Concise</button>
                 <button type="button" aria-pressed={mode === "detailed"} disabled={busy || loading} onClick={() => setMode("detailed")}>Detailed</button>
               </div>

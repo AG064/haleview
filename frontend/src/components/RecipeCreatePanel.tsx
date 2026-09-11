@@ -57,7 +57,7 @@ export function RecipeCreatePanel({ request, onOpen, refreshKey, collectionOnly 
 
   return <div className="recipe-create">
     {!collectionOnly && <div className="create-intro"><span className="create-mark"><ChefHat aria-hidden="true" /></span><div><p className="eyebrow">A little kitchen curiosity</p><h3>What sounds good?</h3><p>Start with an idea. Let Hale help turn it into dinner.</p></div></div>}
-    {!collectionOnly && <div className="create-tabs" role="group" aria-label="Recipe creation mode">
+    {!collectionOnly && <div className="create-tabs segmented-switch" role="group" aria-label="Recipe creation mode" data-index={mode === "describe" ? "0" : "1"} data-segments="2">
       <button type="button" aria-pressed={mode === "describe"} disabled={busy} onClick={() => setMode("describe")}><Sparkles aria-hidden="true" />Describe</button>
       <button type="button" aria-pressed={mode === "combine"} disabled={busy} onClick={() => setMode("combine")}><CombineRecipeIcon />Combine</button>
     </div>}

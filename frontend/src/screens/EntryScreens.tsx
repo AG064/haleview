@@ -142,7 +142,7 @@ export function AccessScreen(props: AccessScreenProps) {
               <ProviderButton provider="github" enabled={props.oauthProviders.github} busy={props.accountBusy} onSelect={props.onOAuth} />
             </div>
             <div className="account-divider"><span>or use email</span></div>
-            <div className="account-switch" role="group" aria-label="Email account action">
+            <div className="account-switch segmented-switch" role="group" aria-label="Email account action" data-index={props.accountMode === "signin" ? "0" : "1"} data-segments="2">
               <button type="button" className={props.accountMode === "signin" ? "active" : ""} aria-pressed={props.accountMode === "signin"} onClick={() => props.onAccountModeChange("signin")}>Sign in</button>
               <button type="button" className={props.accountMode === "create" ? "active" : ""} aria-pressed={props.accountMode === "create"} onClick={() => props.onAccountModeChange("create")}>Create account</button>
             </div>

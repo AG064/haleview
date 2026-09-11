@@ -441,7 +441,7 @@ export function HaleScreen({ guidance, allowOnlineAi, recommendationRefreshing, 
 
   return (
     <div className="hale-view">
-      <div className="hale-view-tabs" data-view={activeView} role="tablist" aria-label="Hale views">
+      <div className="hale-view-tabs segmented-switch" data-view={activeView} data-index={activeView === "chat" ? "0" : "1"} data-segments="2" role="tablist" aria-label="Hale views">
         {views.map((view) => {
           const active = activeView === view;
           const label = view === "chat" ? "Chat" : "Guidance";
