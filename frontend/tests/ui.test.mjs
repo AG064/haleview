@@ -19,7 +19,7 @@ await build({
     export {DashboardOverview, HaleScreen} from "./screens/DashboardScreens";
     export {CombineRecipeIcon} from "./components/CombineRecipeIcon";
     export {HaleChatChart} from "./components/HaleChatChart";
-    export {HaleChatTurn} from "./components/HaleChat";
+    export {HaleChat, HaleChatTurn} from "./components/HaleChat";
     export {initialForm, initialPrivacy} from "./app-data";
     export {displayDate, displayDateOnly, localDateTimeValue} from "./format";
   `, resolveDir: fileURLToPath(new URL("../src/", import.meta.url)), loader: "tsx"},
@@ -146,4 +146,13 @@ test("Hale chat renders a compact user message and a labelled assistant reply", 
   assert.ok(html.includes("hale-chat-avatar"));
   assert.ok(html.includes("Saved data and guidance · Detailed"));
   assert.ok(html.includes("Weight: 72 kg"));
+});
+
+test("Hale chat uses an accessible two-button reply detail control", () => {
+  const html = render(ui.HaleChat, {request: async () => {}});
+  assert.match(html, /role="group" aria-label="Reply detail" data-mode="concise"/);
+  assert.match(html, /<button type="button" aria-pressed="true"[^>]*>Concise<\/button>/);
+  assert.match(html, /<button type="button" aria-pressed="false"[^>]*>Detailed<\/button>/);
+  assert.ok(!html.includes("hale-chat-detail-label"));
+  assert.ok(!html.includes("<select"));
 });
