@@ -1,10 +1,13 @@
 .app-shell { width: min(1280px, calc(100% - 64px)); padding-top: 28px; }
-.app-shell .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; padding-bottom: 32px; }
+.app-shell .topbar { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; gap: 12px; padding-bottom: 18px; }
 .app-shell .product-name { grid-column: 1; grid-row: 1; }
-.app-shell .top-account { grid-column: 2; grid-row: 1; width: auto; }
-.app-shell .main-tabs { grid-column: 1 / -1; grid-row: 2; width: 100%; padding: 6px; border-radius: 12px; background: var(--panel); }
-.app-shell .main-tabs > button { min-height: 44px; flex: 1 0 auto; padding: 12px 16px; }
-.app-shell .product-name h1 { font-size: 1.5rem; }
+.app-shell .top-account { grid-column: 3; grid-row: 1; width: auto; gap: 6px; flex-wrap: nowrap; }
+.app-shell .main-tabs { grid-column: 2; grid-row: 1; width: auto; min-width: 0; padding: 3px; border-radius: 9px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; background: var(--panel); }
+.app-shell .main-tabs::-webkit-scrollbar { display: none; }
+.app-shell .main-tabs > button { min-height: 36px; flex: 0 0 auto; padding: 8px 9px; font-size: 0.72rem; }
+.app-shell .product-name h1 { font-size: 1.25rem; }
+.app-shell .product-name { gap: 7px; white-space: nowrap; }
+.app-shell .guide-button { min-height: 36px; padding: 7px 8px !important; }
 .app-shell .dashboard-tabs { margin-bottom: 28px; }
 .app-shell .dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .app-shell .dashboard-heading .dashboard-tabs { margin: 0; flex-shrink: 0; }
@@ -61,13 +64,21 @@
 .recipe-nutrition-filters > p { margin: 0 0 20px; max-width: 70ch; color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
 .recipe-nutrition-filters .recipe-filter-grid { gap: 16px; }
 
+@media (max-width: 1280px) {
+  .app-shell .product-name > span { display: none; }
+}
+
 @media (max-width: 680px) {
   .app-shell .dashboard-heading { flex-direction: column; align-items: stretch; gap: 16px; }
   .app-shell { width: calc(100% - 24px); padding-top: 16px; }
-  .app-shell .topbar { gap: 16px; padding-bottom: 24px; }
-  .app-shell .top-account { grid-column: 1 / -1; grid-row: 2; width: 100%; }
-  .app-shell .main-tabs { grid-row: 3; }
-  .app-shell .main-tabs > button { padding: 12px; }
+  .app-shell .topbar { grid-template-columns: max-content minmax(0, 1fr) max-content; gap: 7px; padding-bottom: 16px; }
+  .app-shell .top-account { grid-column: 3; grid-row: 1; width: auto; gap: 4px; }
+  .app-shell .main-tabs { grid-column: 2; grid-row: 1; }
+  .app-shell .main-tabs > button { min-height: 36px; padding: 7px 8px; }
+  .app-shell .product-name > span,
+  .app-shell .top-account .account-label > span,
+  .app-shell .guide-button > span { display: none; }
+  .app-shell .guide-button { width: 36px; min-width: 36px; padding: 0 !important; }
   .app-shell :is(.intro, .profile-hero, .settings-hero, .planner-focus, .dashboard-next-card, .nutrition-log-card) { padding: 24px 20px; border-radius: 16px; }
   .app-shell .app-accordion > summary { padding: 16px; }
   .app-shell .app-accordion-body { padding: 20px 16px; }

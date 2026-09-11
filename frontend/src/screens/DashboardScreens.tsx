@@ -445,7 +445,6 @@ export function HaleScreen({ guidance, allowOnlineAi, recommendationRefreshing, 
         {views.map((view) => {
           const active = activeView === view;
           const label = view === "chat" ? "Chat" : "Guidance";
-          const description = view === "chat" ? "Ask Hale about your saved data" : "Review your current priorities";
           const Icon = view === "chat" ? MessageCircle : HeartPulse;
           return (
             <button
@@ -473,7 +472,7 @@ export function HaleScreen({ guidance, allowOnlineAi, recommendationRefreshing, 
               type="button"
             >
               <Icon aria-hidden="true" />
-              <span><strong>{label}</strong><small>{description}</small></span>
+              <strong>{label}</strong>
             </button>
           );
         })}

@@ -825,27 +825,30 @@
 
 .hale-view {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-3);
 }
 
 .hale-view-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px;
+  width: fit-content;
+  gap: 3px;
+  padding: 3px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  border-radius: 9px;
   background: var(--panel);
 }
 
 .hale-view-tab {
   display: flex;
-  min-width: 0;
+  justify-content: center;
+  min-width: 120px;
+  min-height: 36px;
   align-items: center;
-  gap: var(--space-3);
-  padding: 13px 16px;
+  gap: 7px;
+  padding: 7px 12px;
   border: 1px solid transparent;
-  border-radius: calc(var(--radius-md) - 4px);
+  border-radius: 6px;
   color: var(--muted);
   background: transparent;
   text-align: left;
@@ -863,29 +866,13 @@
 }
 
 .hale-view-tab > svg {
-  width: 22px;
-  height: 22px;
+  width: 17px;
+  height: 17px;
   flex: 0 0 auto;
   color: var(--accent);
 }
 
-.hale-view-tab > span {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
-}
-
-.hale-view-tab strong,
-.hale-view-tab small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hale-view-tab small {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
+.hale-view-tab strong { font-size: 0.78rem; line-height: 1; white-space: nowrap; }
 
 .hale-view > [role="tabpanel"] > .guidance-panel {
   margin-top: 0;

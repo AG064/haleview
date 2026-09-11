@@ -35,13 +35,13 @@ export function AppShell({ route, hasProfile, guestMode, signedIn, onNavigate, o
         </nav>
         <div className="top-account">
           <ThemeToggle />
-          <button className="text-button guide-button button-with-icon" type="button" onClick={onOpenTutorial}><BookOpen aria-hidden="true" /><span>Guide</span></button>
+          <button className="text-button guide-button button-with-icon" type="button" aria-label="Open guide" title="Open guide" onClick={onOpenTutorial}><BookOpen aria-hidden="true" /><span>Guide</span></button>
           {guestMode ? (
             <>
-            <span className="account-label"><CircleUserRound aria-hidden="true" />Guest</span>
+            <span className="account-label"><CircleUserRound aria-hidden="true" /><span>Guest</span></span>
             <button className="text-button" type="button" onClick={onOpenAccount}>Sign in</button>
             </>
-          ) : signedIn ? <span>Account</span> : null}
+          ) : signedIn ? <span className="account-label"><CircleUserRound aria-hidden="true" /><span>Account</span></span> : null}
         </div>
       </header>
 
