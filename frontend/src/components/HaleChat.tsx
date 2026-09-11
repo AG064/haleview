@@ -141,14 +141,14 @@ export function HaleChat({ request }: { request: SessionRequest }) {
         <header className="hale-chat-heading">
           <div className="hale-chat-heading-title">
             <span className="hale-chat-heading-icon"><MessageCircle aria-hidden="true" /></span>
-            <div><p className="eyebrow">Hale</p><h2 id="hale-chat-title">Let's talk about your wellbeing</h2></div>
+            <div><p className="eyebrow">Hale</p><h2 id="hale-chat-title">Chat with Hale</h2></div>
           </div>
           <div className="hale-chat-heading-actions">
             {!loading && <span className="hale-chat-mode">{online ? "Online AI" : "Saved data"}</span>}
-            {turns.length > 0 && !confirmClear && <button type="button" className="hale-chat-clear button-with-icon" disabled={busy || loadingEarlier} onClick={() => setConfirmClear(true)}><Trash2 aria-hidden="true" />Clear</button>}
+            {turns.length > 0 && !confirmClear && <button type="button" className="hale-chat-clear button-with-icon" aria-label="Clear chat history" disabled={busy || loadingEarlier} onClick={() => setConfirmClear(true)}><Trash2 aria-hidden="true" /><span>Clear</span></button>}
           </div>
         </header>
-        <p className="hale-chat-intro">Ask about your health, progress, meals, recipes or wellbeing. You can also ask for a chart. Hale remembers the recent conversation and uses your saved data.</p>
+        <p className="hale-chat-intro">Ask about your health, progress, meals, recipes, wellbeing, or a chart. Hale uses your saved data and recent chat.</p>
         {!loading && !online && <p className="hale-chat-notice">Online AI is off. You can still look up your saved data here.</p>}
         {confirmClear && <div className="hale-chat-history-actions"><p>Clear your saved chat history?</p><button type="button" className="secondary-button" disabled={busy || loadingEarlier} onClick={() => void removeHistory()}>Clear history</button><button type="button" className="text-button" disabled={busy || loadingEarlier} onClick={() => setConfirmClear(false)}>Keep history</button></div>}
       </div>
@@ -177,17 +177,20 @@ export function HaleChat({ request }: { request: SessionRequest }) {
       <div className="hale-chat-composer-dock">
         {error && <div className="hale-chat-error" role="alert"><p>{error}</p>{loadError && <button className="secondary-button" type="button" onClick={() => setRetry((value) => value + 1)}>Retry loading chat</button>}</div>}
         <form className="hale-chat-form" onSubmit={(event) => void submit(event)}>
-          <div className="hale-chat-composer-heading"><label className="sr-only" htmlFor="hale-chat-message">Message Hale</label><label className="hale-chat-detail-label" htmlFor="hale-chat-detail">Reply detail<select id="hale-chat-detail" value={mode} disabled={busy || loading} onChange={(event) => setMode(event.target.value as "concise" | "detailed")}><option value="concise">Concise</option><option value="detailed">Detailed</option></select></label></div>
           <div className="hale-chat-composer-box">
-            <textarea id="hale-chat-message" ref={input} rows={2} maxLength={2000} value={message} disabled={busy || loading || loadError}
+            <label className="sr-only" htmlFor="hale-chat-message">Message Hale</label>
+            <textarea id="hale-chat-message" ref={input} rows={1} maxLength={2000} value={message} disabled={busy || loading || loadError}
               onChange={(event) => setMessage(event.target.value)} placeholder="Message Hale"
               aria-describedby="hale-chat-help hale-chat-count"
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); }
               }} />
-            <button type="submit" className="hale-chat-send" disabled={busy || loading || loadError || !message.trim()} aria-busy={busy} aria-label={pending ? "Sending message" : "Send message"}><Send aria-hidden="true" /></button>
+            <div className="hale-chat-composer-controls">
+              <label className="hale-chat-detail-label" htmlFor="hale-chat-detail">Detail<select id="hale-chat-detail" value={mode} disabled={busy || loading} onChange={(event) => setMode(event.target.value as "concise" | "detailed")}><option value="concise">Concise</option><option value="detailed">Detailed</option></select></label>
+              <div className="hale-chat-composer-actions"><span id="hale-chat-count">{message.length} / 2000</span><button type="submit" className="hale-chat-send" disabled={busy || loading || loadError || !message.trim()} aria-busy={busy} aria-label={pending ? "Sending message" : "Send message"}><Send aria-hidden="true" /></button></div>
+            </div>
           </div>
-          <div className="hale-chat-form-meta"><p id="hale-chat-help" className="hale-chat-help">Enter to send. Shift+Enter for a new line. Keep contact details and passwords out of chat. Hale cannot diagnose or provide medical treatment.</p><span id="hale-chat-count">{message.length} / 2000</span></div>
+          <p id="hale-chat-help" className="hale-chat-help">Enter sends. Shift+Enter adds a line. Do not share contact details or passwords. Hale cannot diagnose or provide treatment.</p>
         </form>
       </div>
     </section>
