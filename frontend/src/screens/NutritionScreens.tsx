@@ -190,7 +190,7 @@ export function NutritionScreen({ request, signedIn }: NutritionScreenProps) {
           <span className="nutrition-log-icon"><Utensils aria-hidden="true" /></span>
           <div><p className="eyebrow">Next step</p><h2>Log a meal</h2><p>Use a planned meal when it is ready. Enter a meal yourself when it is not.</p></div>
         </div>
-        <div className="nutrition-log-tabs" role="tablist" aria-label="Meal logging method">
+        <div className="nutrition-log-tabs segmented-switch" role="tablist" aria-label="Meal logging method" data-index={loggingMode === "planned" ? "0" : "1"} data-segments="2">
           <button type="button" role="tab" aria-selected={loggingMode === "planned"} className={loggingMode === "planned" ? "active" : ""} onClick={() => setLoggingMode("planned")} disabled={plans.length === 0}>Planned meal</button>
           <button type="button" role="tab" aria-selected={loggingMode === "manual"} className={loggingMode === "manual" ? "active" : ""} onClick={() => setLoggingMode("manual")}>Manual entry</button>
         </div>

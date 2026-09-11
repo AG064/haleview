@@ -375,7 +375,7 @@ export function ShoppingListScreen({
                 onChange={(event) => setQuery(event.target.value)}
               />
             </label>
-            <div className="shop-tabs" aria-label="Show shopping items">
+            <div className="shop-tabs segmented-switch" role="group" aria-label="Show shopping items" data-index={neededOnly ? "1" : "0"} data-segments="2">
               <button
                 type="button"
                 aria-pressed={!neededOnly}
