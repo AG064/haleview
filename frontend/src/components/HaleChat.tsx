@@ -3,8 +3,9 @@ import { MessageCircle, Send, Trash2 } from "lucide-react";
 import { ApiError } from "../api";
 import { clearChat, loadChat, loadEarlierChat, sendChat, type ChatTurn } from "../assistant-api";
 import type { SessionRequest } from "../nutrition/api";
+import { HaleChatChart } from "./HaleChatChart";
 
-const suggestions = ["How are my weight and BMI doing?", "How has my weight changed this month?", "How do I prepare tonight's dinner?", "How much protein have I recorded this week?"];
+const suggestions = ["How are my weight and BMI doing?", "Show me my weight trend this month", "How do I prepare tonight's dinner?", "How much protein have I recorded this week?"];
 
 export function HaleChat({ request }: { request: SessionRequest }) {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
@@ -120,7 +121,7 @@ export function HaleChat({ request }: { request: SessionRequest }) {
         </div>
         {!loading && <span className="hale-chat-mode">{online ? "Online AI" : "Saved data"}</span>}
       </header>
-      <p className="hale-chat-intro">Ask about your health, progress, meals, recipes or wellbeing. Hale remembers the recent conversation and uses your saved data.</p>
+      <p className="hale-chat-intro">Ask about your health, progress, meals, recipes or wellbeing. You can also ask for a chart. Hale remembers the recent conversation and uses your saved data.</p>
       {!loading && !online && <p className="hale-chat-notice">Online AI is off. You can still look up your saved data here.</p>}
       {loading ? <p role="status">Loading your chat...</p> : <>
         {hasEarlier && <button className="secondary-button" type="button" disabled={loadingEarlier || busy} onClick={() => void earlierMessages()}>{loadingEarlier ? "Loading earlier messages..." : "Load earlier messages"}</button>}
@@ -137,7 +138,9 @@ export function HaleChat({ request }: { request: SessionRequest }) {
               {turn.reply.sections.map((section, index) => <div className="hale-chat-facts" key={`${turn.id}-${index}`}>
                 <h3>{section.title}</h3>
                 {section.ordered ? <ol>{section.lines.map((line, lineIndex) => <li key={lineIndex}>{line}</li>)}</ol> : <ul>{section.lines.map((line, lineIndex) => <li key={lineIndex}>{line}</li>)}</ul>}
+                {section.chart && <HaleChatChart chart={section.chart} />}
               </div>)}
+              {turn.reply.suggestions?.length ? <div className="hale-chat-chart-suggestions" aria-label="Suggested charts"><span>Related view</span>{turn.reply.suggestions.map((suggestion) => <button type="button" className="secondary-button" key={suggestion.prompt} onClick={() => { setMessage(suggestion.prompt); input.current?.focus(); }}>{suggestion.label}</button>)}</div> : null}
               {turn.reply.notice && <p className="hale-chat-notice">{turn.reply.notice}</p>}
             </article>
           </div>)}

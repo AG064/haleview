@@ -126,5 +126,16 @@ export function healthProgress(userId: number, profile: HealthProfile, args: Rec
     if (metric === "wellness_score") section.details!.push("These are saved health scores, without reconstructed nutrition adjustments.");
   }
   section.details!.push(`Available measurements: ${points.length}`, ...points.slice(-12).map((point) => `${point.localDate}: ${number(point.value)}${metric === "weight" ? " kg" : metric === "wellness_score" ? " points" : metric === "bmi" ? "" : " active-day value"}`), "Missing dates are not interpolated. These observations do not explain the cause of a change.");
+  if (args.visualization === "line") {
+    const unit = metric === "weight" ? "kg" : metric === "wellness_score" ? "points" : metric === "activity" ? "active-day value" : "BMI";
+    const dailyPoints = [...new Map(points.map((point) => [point.localDate, point])).values()];
+    section.chart = {
+      type: "line",
+      title: `${metric === "weight" ? "Weight" : metric === "bmi" ? "BMI" : metric === "activity" ? "Activity" : "Health score"} over time`,
+      unit,
+      description: `Latest recorded ${metric.replaceAll("_", " ")} for each local date from ${range.from} to ${range.to}. Missing dates are not interpolated.`,
+      items: dailyPoints.slice(-31).map((point) => ({ label: point.localDate, value: point.value })),
+    };
+  }
   return { ok: true, section, reference: { topic: "progress", period, metric } };
 }

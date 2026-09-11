@@ -8,7 +8,7 @@ const {database, saveProfile} = await import("../dist/storage.js");
 const {protectStoredText, protectedLookupHash} = await import("../dist/protected-data.js");
 const {executeAssistantTool} = await import("../dist/assistant/tools.js");
 const {sendChatMessage} = await import("../dist/assistant/conversation.js");
-const {clearChatHistory, getChatHistory, getChatPage, saveChatTurn, exportChatHistory} = await import("../dist/assistant/store.js");
+const {clearChatHistory, getChatHistory, getChatPage, getModelChatContext, saveChatTurn, exportChatHistory} = await import("../dist/assistant/store.js");
 const {createChatProvider} = await import("../dist/assistant/provider.js");
 const {suggestedTools} = await import("../dist/assistant/intent.js");
 const {saveNutritionPreferences} = await import("../dist/nutrition/storage.js");
@@ -49,6 +49,76 @@ test("recorded weight changes include exact endpoints, direction and target dist
   assert.match(result.section.lines.join(" "),/decreased consistently/);
   assert.match(result.section.lines.join(" "),/latest recorded distance: 4 kg/);
   assert.equal(executeAssistantTool(owner,"get_health_progress",{metric:"weight",period:"last_month"},now).code,"not_found");
+});
+
+test("natural language chart requests use exact saved values for line, bar and pie charts",()=>{
+  const line=executeAssistantTool(owner,"get_health_progress",{metric:"weight",period:"month",visualization:"line"},now);
+  assert.deepEqual(line.section.chart.items.map(item=>[item.label,item.value]),[["2026-09-01",78],["2026-09-05",75],["2026-09-10",72]]);
+  assert.equal(line.section.chart.type,"line");
+  const sameDay="2026-09-10T18:00:00Z";
+  database.prepare("INSERT INTO weight_history (user_id,weight_kg,recorded_at,recorded_at_hash) VALUES (?,?,?,?)").run(owner,protectStoredText("71"),protectStoredText(sameDay),protectedLookupHash(sameDay));
+  try {
+    const daily=executeAssistantTool(owner,"get_health_progress",{metric:"weight",period:"month",visualization:"line"},now);
+    assert.deepEqual(daily.section.chart.items.map(item=>[item.label,item.value]),[["2026-09-01",78],["2026-09-05",75],["2026-09-10",71]]);
+  } finally { database.prepare("DELETE FROM weight_history WHERE user_id = ? AND recorded_at_hash = ?").run(owner,protectedLookupHash(sameDay)); }
+  const bar=executeAssistantTool(owner,"get_nutrition_intake",{period:"today",visualization:"bar"},now);
+  assert.deepEqual(bar.section.chart.items.map(item=>[item.label,item.value]),[["Recorded",31],["Target",100]]);
+  const pie=executeAssistantTool(owner,"get_nutrition_intake",{period:"today",visualization:"pie"},now);
+  assert.equal(pie.section.chart.type,"pie");
+  assert.deepEqual(pie.section.chart.items.map(item=>[item.label,item.value]),[["Protein",124],["Carbohydrate",280],["Fat",162]]);
+  assert.deepEqual(suggestedTools("Show me my weight trend this month",[],"2026-09-10"),[{name:"get_health_progress",args:{metric:"weight",period:"month",visualization:"line"}}]);
+  assert.deepEqual(suggestedTools("Show me my weight trend this month",[{reference:{topic:"nutrition",period:"week"}}],"2026-09-10"),[{name:"get_health_progress",args:{metric:"weight",period:"month",visualization:"line"}}]);
+  assert.deepEqual(suggestedTools("Show how my protein intake compares to my target today",[],"2026-09-10"),[{name:"get_nutrition_intake",args:{period:"today",visualization:"bar"}}]);
+  assert.deepEqual(suggestedTools("Show the breakdown of my macronutrients today",[],"2026-09-10"),[{name:"get_nutrition_intake",args:{period:"today",visualization:"pie"}}]);
+});
+
+test("protein discussions offer a relevant chart without duplicating explicit chart requests",async()=>{
+  clearChatHistory(owner);
+  const discussion=await sendChatMessage(owner,input("Have I consumed enough protein today?"),{provider:null,now});
+  assert.deepEqual(discussion.reply.suggestions,[{label:"Show protein chart",prompt:"Show how my protein intake compares with my target today"}]);
+  const chart=await sendChatMessage(owner,input("Show how my protein intake compares to my target today"),{provider:null,now});
+  assert.equal(chart.reply.suggestions,undefined);
+  assert.equal(chart.reply.sections[0].chart.type,"bar");
+});
+
+test("recognized chart requests keep server-selected chart parameters during online tool use",async()=>{
+  clearChatHistory(owner);
+  let round=0;
+  const provider={complete:async()=>round++===0?{content:null,toolCalls:[{id:"chart-call",type:"function",function:{name:"get_nutrition_intake",arguments:JSON.stringify({period:"today"})}}],tokens:20}:completion("Here is the requested chart from your saved data.")};
+  const result=await sendChatMessage(owner,input("Show how my protein intake compares to my target today"),{provider,now});
+  assert.equal(result.reply.source,"deepseek");
+  assert.equal(result.reply.sections[0].chart.type,"bar");
+  assert.deepEqual(result.reply.sections[0].chart.items.map(item=>item.value),[31,100]);
+});
+
+test("recognized requests do not execute unrelated model-selected functions",async()=>{
+  clearChatHistory(owner);
+  let round=0;
+  const provider={complete:async()=>round++===0?{content:null,toolCalls:[{id:"wrong-call",type:"function",function:{name:"get_nutrition_intake",arguments:JSON.stringify({period:"today"})}}],tokens:20}:completion("Here is the requested weight chart.")};
+  const result=await sendChatMessage(owner,input("Show me my weight trend this month"),{provider,now});
+  assert.equal(result.reply.source,"local");
+  assert.equal(result.reply.sections.length,1);
+  assert.equal(result.reply.sections[0].chart.type,"line");
+  assert.doesNotMatch(result.reply.sections[0].title,/nutrition/i);
+});
+
+test("long conversations compress older topics while keeping current-topic turns in detail",()=>{
+  const userId=4101;
+  clearChatHistory(userId);
+  for(let index=0;index<14;index++){
+    const topic=index<8?"nutrition":"wellness";
+    const message=index===0?"I prefer low impact workouts":topic==="nutrition"?`Protein discussion ${index}`:`Sleep routine ${index}`;
+    saveChatTurn(userId,{id:randomUUID(),message,createdAt:new Date(now.getTime()+index*1000).toISOString(),mode:"concise",reference:topic==="nutrition"?{topic,period:"week"}:{topic,wellnessTopic:"sleep"},reply:{text:"Saved reply",sections:[],source:"local",notice:null}},120);
+  }
+  const context=getModelChatContext(userId,["wellness"]);
+  assert.equal(context.summary.turnCount,9);
+  assert.ok(context.summary.notes.includes("I prefer low impact workouts"));
+  assert.equal(context.detailedTurns.length,5);
+  assert.ok(context.detailedTurns.every(turn=>turn.reference.topic==="wellness"));
+  const stored=database.prepare("SELECT summary_json FROM assistant_context_summaries WHERE user_id = ?").get(userId).summary_json;
+  assert.doesNotMatch(stored,/low impact|Protein discussion/);
+  clearChatHistory(userId);
+  assert.equal(database.prepare("SELECT COUNT(*) AS count FROM assistant_context_summaries WHERE user_id = ?").get(userId).count,0);
 });
 
 test("nutrition trends compare logged dates without treating missing days as actual zero intake",()=>{
@@ -203,6 +273,8 @@ test("invalid and prototype-like tool names, mixed references and out-of-range p
     ["get_recipe",{mealType:"dinner",servings:0}],["get_recipe",{mealType:"dinner",servings:Infinity}],
     ["get_recipe",{recipeId:"../../private"}],["get_meal_plan",{date:"9999-01-01"}],
     ["get_health_progress",{metric:"weight",period:"forever"}],["get_wellness_guidance",{topic:"prescriptions"}],
+    ["get_health_progress",{metric:"weight",period:"month",visualization:"pie"}],
+    ["get_nutrition_intake",{period:"today",visualization:"line"}],
   ])assert.equal(executeAssistantTool(owner,name,args,now).code,"invalid_arguments");
 });
 

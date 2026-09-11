@@ -90,6 +90,31 @@ export function nutritionIntake(userId: number, profile: HealthProfile, args: Re
       section.lines.push(`Recorded protein: ${number(first.proteinG)} g on ${dates[0]} to ${number(last.proteinG)} g on ${dates.at(-1)}.`, `Recorded energy: ${number(first.caloriesKcal)} kcal to ${number(last.caloriesKcal)} kcal between those logged dates.`, `Recorded protein ${Math.abs(last.proteinG - first.proteinG) < 0.1 ? "ended close to where it started" : last.proteinG > first.proteinG ? "increased" : "decreased"} between the first and last logged dates.`, "This describes logged food only. Days with no records are unknown, not evidence of zero intake.");
     }
   }
+  if (args.visualization === "bar") {
+    section.chart = {
+      type: "bar",
+      title: `Recorded protein compared with target for ${label}`,
+      unit: "g",
+      description: "Recorded protein and the saved protein target for the same period. Unlogged food is unknown.",
+      items: [
+        { label: "Recorded", value: period.nutrition.proteinG, detail: `${number(period.nutrition.proteinG)} g` },
+        { label: "Target", value: period.targets.proteinG, detail: `${number(period.targets.proteinG)} g` },
+      ],
+    };
+  } else if (args.visualization === "pie") {
+    const macroEnergy = [
+      { label: "Protein", value: period.nutrition.proteinG * 4, detail: `${number(period.nutrition.proteinG)} g` },
+      { label: "Carbohydrate", value: period.nutrition.carbsG * 4, detail: `${number(period.nutrition.carbsG)} g` },
+      { label: "Fat", value: period.nutrition.fatsG * 9, detail: `${number(period.nutrition.fatsG)} g` },
+    ];
+    section.chart = {
+      type: "pie",
+      title: `Recorded macro energy breakdown for ${label}`,
+      unit: "kcal",
+      description: "Calculated energy share from recorded macros. Protein and carbohydrate use 4 kcal per gram; fat uses 9 kcal per gram.",
+      items: macroEnergy,
+    };
+  }
   return { ok: true, section, reference: { topic: "nutrition", period: periodName, view: args.view === "trend" ? "trend" : "summary" } };
 }
 
