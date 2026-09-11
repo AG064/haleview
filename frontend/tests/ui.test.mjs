@@ -19,6 +19,7 @@ await build({
     export {DashboardOverview, HaleScreen} from "./screens/DashboardScreens";
     export {CombineRecipeIcon} from "./components/CombineRecipeIcon";
     export {HaleChatChart} from "./components/HaleChatChart";
+    export {HaleChatTurn} from "./components/HaleChat";
     export {initialForm, initialPrivacy} from "./app-data";
     export {displayDate, displayDateOnly, localDateTimeValue} from "./format";
   `, resolveDir: fileURLToPath(new URL("../src/", import.meta.url)), loader: "tsx"},
@@ -122,4 +123,27 @@ test("Hale renders line, bar and pie chart values as accessible text", () => {
     assert.ok(html.includes("31 g"));
     assert.ok(html.includes('role="img"'));
   }
+});
+
+test("Hale chat renders a compact user message and a labelled assistant reply", () => {
+  const html = render(ui.HaleChatTurn, {
+    turn: {
+      id: "turn-1",
+      message: "How is my progress?",
+      createdAt: "2026-09-11T10:00:00Z",
+      mode: "detailed",
+      reply: {
+        text: "Your saved progress is available.",
+        sections: [{title: "Saved values", lines: ["Weight: 72 kg"]}],
+        source: "local",
+        notice: null,
+      },
+    },
+    onSuggestion: () => {},
+  });
+  assert.match(html, /class="hale-chat-message hale-chat-user" aria-label="Your message"/);
+  assert.match(html, /class="hale-chat-message hale-chat-answer" aria-label="Hale&#x27;s reply"/);
+  assert.ok(html.includes("hale-chat-avatar"));
+  assert.ok(html.includes("Saved data and guidance · Detailed"));
+  assert.ok(html.includes("Weight: 72 kg"));
 });
