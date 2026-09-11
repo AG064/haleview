@@ -823,6 +823,74 @@
   margin-bottom: 13px;
 }
 
+.hale-view {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.hale-view-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+
+.hale-view-tab {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 13px 16px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius-md) - 4px);
+  color: var(--muted);
+  background: transparent;
+  text-align: left;
+}
+
+.hale-view-tab:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.hale-view-tab[aria-selected="true"] {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+
+.hale-view-tab > svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.hale-view-tab > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.hale-view-tab strong,
+.hale-view-tab small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hale-view-tab small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.hale-view > [role="tabpanel"] > .guidance-panel {
+  margin-top: 0;
+}
+
 .hale-page-heading {
   align-items: flex-start;
 }

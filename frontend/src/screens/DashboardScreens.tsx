@@ -2,7 +2,7 @@ import { LoadingView, WaitingState } from "../components/WaitingState";
 import { PageDataState } from "../components/PageDataState";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { NutritionInsights } from "../components/NutritionInsights";
-import { Activity, ArrowRight, BookOpen, CalendarDays, Coffee, Download, Dumbbell, Eye, HeartPulse, History, LogIn, Scale, ShieldCheck, Soup, Sparkles, Target, UserRound, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { Activity, ArrowRight, BookOpen, CalendarDays, Coffee, Download, Dumbbell, Eye, HeartPulse, History, LogIn, MessageCircle, Scale, ShieldCheck, Soup, Sparkles, Target, UserRound, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import TwoFactorQr from "../TwoFactorQr";
 import { labels } from "../app-data";
 import { ApiError } from "../api";
@@ -403,6 +403,8 @@ interface HaleScreenProps {
 }
 
 export function HaleScreen({ guidance, allowOnlineAi, recommendationRefreshing, onRefresh, request }: HaleScreenProps) {
+  const views = ["chat", "guidance"] as const;
+  const [activeView, setActiveView] = useState<(typeof views)[number]>("chat");
   const [primaryItem, ...otherItems] = guidance.items;
   const [nutrition, setNutrition] = useState<NutritionProgressResult | null>(null);
   const [nutritionLoading, setNutritionLoading] = useState(true);
@@ -438,7 +440,49 @@ export function HaleScreen({ guidance, allowOnlineAi, recommendationRefreshing, 
   const nutritionAdvice = nutritionReview ?? nutrition?.summary;
 
   return (
-    <><HaleChat request={request} /><section className="panel guidance-panel hale-page" aria-labelledby="hale-page-title">
+    <div className="hale-view">
+      <div className="hale-view-tabs" role="tablist" aria-label="Hale views">
+        {views.map((view) => {
+          const active = activeView === view;
+          const label = view === "chat" ? "Chat" : "Guidance";
+          const description = view === "chat" ? "Ask Hale about your saved data" : "Review your current priorities";
+          const Icon = view === "chat" ? MessageCircle : HeartPulse;
+          return (
+            <button
+              aria-controls={`hale-${view}-panel`}
+              aria-selected={active}
+              className="hale-view-tab"
+              id={`hale-${view}-tab`}
+              key={view}
+              onClick={() => setActiveView(view)}
+              onKeyDown={(event) => {
+                const currentIndex = views.indexOf(view);
+                let nextIndex: number;
+                if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + views.length) % views.length;
+                else if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % views.length;
+                else if (event.key === "Home") nextIndex = 0;
+                else if (event.key === "End") nextIndex = views.length - 1;
+                else return;
+                event.preventDefault();
+                const nextView = views[nextIndex];
+                setActiveView(nextView);
+                document.getElementById(`hale-${nextView}-tab`)?.focus();
+              }}
+              role="tab"
+              tabIndex={active ? 0 : -1}
+              type="button"
+            >
+              <Icon aria-hidden="true" />
+              <span><strong>{label}</strong><small>{description}</small></span>
+            </button>
+          );
+        })}
+      </div>
+      <div aria-labelledby="hale-chat-tab" hidden={activeView !== "chat"} id="hale-chat-panel" role="tabpanel">
+        <HaleChat request={request} />
+      </div>
+      <div aria-labelledby="hale-guidance-tab" hidden={activeView !== "guidance"} id="hale-guidance-panel" role="tabpanel">
+        <section className="panel guidance-panel hale-page" aria-labelledby="hale-page-title">
       <div className="panel-heading hale-page-heading">
         <div className="hale-page-title">
           <span className="hale-page-icon"><HeartPulse aria-hidden="true" /></span>
@@ -494,7 +538,9 @@ export function HaleScreen({ guidance, allowOnlineAi, recommendationRefreshing, 
           })}
         </div>
       </div>}
-    </section></>
+        </section>
+      </div>
+    </div>
   );
 }
 

@@ -184,6 +184,10 @@
     width: 100%;
   }
 
+  .hale-view-tabs {
+    grid-template-columns: 1fr;
+  }
+
   .hale-ai-button {
     width: 100%;
   }
