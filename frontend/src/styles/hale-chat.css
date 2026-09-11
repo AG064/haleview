@@ -11,30 +11,31 @@
   overflow: hidden;
 }
 
-.hale-chat-chrome { display: grid; gap: 10px; padding: 22px 28px 18px; }
+.hale-chat-chrome { display: grid; gap: 5px; padding: 12px 20px 10px; }
 .hale-chat-heading,
 .hale-chat-heading-title,
 .hale-chat-heading-actions,
 .hale-chat-answer-label,
 .hale-chat-history-actions,
-.hale-chat-form-meta { display: flex; align-items: center; gap: 12px; }
-.hale-chat-heading, .hale-chat-answer-label, .hale-chat-form-meta { justify-content: space-between; }
+.hale-chat-composer-controls,
+.hale-chat-composer-actions { display: flex; align-items: center; gap: 12px; }
+.hale-chat-heading, .hale-chat-answer-label, .hale-chat-composer-controls { justify-content: space-between; }
 .hale-chat-heading-title { min-width: 0; }
 .hale-chat-heading-icon,
 .hale-chat-welcome-icon,
 .hale-chat-avatar { display: grid; place-items: center; flex: 0 0 auto; color: var(--accent); background: var(--accent-soft); }
-.hale-chat-heading-icon { width: 40px; height: 40px; border-radius: 12px; }
-.hale-chat-heading-icon > svg { width: 21px; height: 21px; }
-.hale-chat-heading h2 { margin: 0; font-size: clamp(1.25rem, 2vw, 1.55rem); }
-.hale-chat-heading .eyebrow { margin-bottom: 3px; }
+.hale-chat-heading-icon { width: 34px; height: 34px; border-radius: 10px; }
+.hale-chat-heading-icon > svg { width: 18px; height: 18px; }
+.hale-chat-heading h2 { margin: 0; font-size: clamp(1.15rem, 1.8vw, 1.35rem); }
+.hale-chat-heading .eyebrow { margin-bottom: 1px; font-size: 0.7rem; }
 .hale-chat-heading-actions { flex: 0 0 auto; }
 .hale-chat-mode { border: 1px solid var(--line); border-radius: 20px; padding: 6px 11px; font-size: 0.75rem; color: var(--muted); }
 .hale-chat-clear { min-height: 36px; padding: 7px 9px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-weight: 600; }
 .hale-chat-clear:hover:not(:disabled) { color: var(--ink); background: var(--surface); }
 .hale-chat-clear > svg { width: 15px; height: 15px; }
-.hale-chat-intro, .hale-chat-help, .hale-chat-notice { margin: 0; color: var(--muted); line-height: 1.55; }
-.hale-chat-intro { max-width: 76ch; font-size: 0.9rem; }
-.hale-chat-help, .hale-chat-notice { font-size: 0.8rem; }
+.hale-chat-intro, .hale-chat-help, .hale-chat-notice { margin: 0; color: var(--muted); line-height: 1.4; }
+.hale-chat-intro { max-width: none; font-size: 0.8rem; }
+.hale-chat-help, .hale-chat-notice { font-size: 0.75rem; }
 .hale-chat-history-actions { flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .hale-chat-history-actions p { margin: 0; }
 .hale-chat-history-actions .secondary-button { min-height: 36px; padding: 7px 11px; }
@@ -43,8 +44,8 @@
 .hale-chat-loading { display: grid; height: 100%; place-items: center; margin: 0; color: var(--muted); }
 .hale-chat-earlier { position: absolute; z-index: 2; left: 50%; padding-top: 10px; transform: translateX(-50%); }
 .hale-chat-earlier .secondary-button { min-height: 36px; padding: 7px 12px; box-shadow: 0 2px 10px #0002; }
-.hale-chat-log { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 28px 22px 38px; scrollbar-gutter: stable; }
-.hale-chat-column { display: grid; width: min(100%, 820px); min-width: 0; margin: 0 auto; gap: 30px; }
+.hale-chat-log { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 16px 22px 20px; scrollbar-gutter: stable; }
+.hale-chat-column { display: grid; width: min(100%, 900px); min-width: 0; margin: 0 auto; gap: 22px; }
 .hale-chat-welcome { display: grid; justify-items: center; align-content: center; min-height: 100%; padding: 30px 10px; text-align: center; }
 .hale-chat-welcome-icon { width: 48px; height: 48px; margin-bottom: 18px; border-radius: 15px; }
 .hale-chat-welcome-icon > svg { width: 24px; height: 24px; }
@@ -53,9 +54,9 @@
 .hale-chat-suggestions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 680px); gap: 10px; margin-top: 26px; }
 .hale-chat-suggestions button { min-height: 54px; padding: 11px 14px; text-align: left; white-space: normal; }
 
-.hale-chat-turn { display: grid; min-width: 0; gap: 18px; }
+.hale-chat-turn { display: grid; min-width: 0; gap: 14px; }
 .hale-chat-message { min-width: 0; overflow-wrap: anywhere; }
-.hale-chat-message p { white-space: pre-wrap; line-height: 1.65; }
+.hale-chat-message p { white-space: pre-wrap; line-height: 1.55; }
 .hale-chat-user { justify-self: end; max-width: min(78%, 680px); padding: 11px 15px; border: 0; border-radius: 18px 18px 5px 18px; background: var(--accent-soft); }
 .hale-chat-user p { margin: 0; }
 .hale-chat-answer { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding: 0; border: 0; background: transparent; }
@@ -64,14 +65,14 @@
 .hale-chat-answer-body { min-width: 0; padding-top: 4px; }
 .hale-chat-answer-label { min-height: 26px; }
 .hale-chat-answer-label span { color: var(--muted); font-size: 0.75rem; }
-.hale-chat-answer-body > p { margin: 8px 0 0; }
-.hale-chat-facts { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.hale-chat-answer-body > p { margin: 6px 0 0; }
+.hale-chat-facts { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .hale-chat-facts h3 { margin: 0 0 10px; font-size: 1rem; }
 .hale-chat-facts :is(ul, ol) { display: grid; gap: 6px; margin: 0; padding-left: 20px; line-height: 1.6; }
 .hale-chat-pending { color: var(--muted); }
 .hale-chat-pending .hale-chat-answer-body > p { margin-top: 4px; }
 
-.hale-chat-chart { min-width: 0; margin: 18px 0 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.hale-chat-chart { min-width: 0; margin: 14px 0 0; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
 .hale-chat-chart figcaption { display: grid; gap: 4px; margin-bottom: 14px; }
 .hale-chat-chart figcaption span { color: var(--muted); font-size: 0.8125rem; line-height: 1.5; }
 .hale-line-chart { display: block; width: 100%; height: auto; min-height: 180px; overflow: visible; }
@@ -96,33 +97,36 @@
 .hale-chat-chart-suggestions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .hale-chat-chart-suggestions > span { color: var(--muted); font-size: 0.8125rem; font-weight: 600; }
 
-.hale-chat-composer-dock { padding: 12px 28px 16px; background: var(--panel); }
-.hale-chat-error { width: min(100%, 820px); margin: 0 auto 10px; color: var(--danger); }
+.hale-chat-composer-dock { padding: 8px 20px 10px; background: var(--panel); }
+.hale-chat-error { width: min(100%, 900px); margin: 0 auto 8px; color: var(--danger); }
 .hale-chat-error p { margin: 0 0 8px; }
-.hale-chat-form { display: grid; width: min(100%, 820px); margin: 0 auto; gap: 7px; }
-.hale-chat-composer-heading { display: flex; justify-content: flex-end; min-height: 34px; }
-.hale-chat-detail-label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.78rem; font-weight: 600; }
-.hale-chat-detail-label select { width: auto; min-height: 34px; padding: 5px 28px 5px 10px; border-radius: 8px; font-size: 0.8rem; }
-.hale-chat-composer-box { position: relative; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); transition: border-color 150ms ease, box-shadow 150ms ease; }
+.hale-chat-form { display: grid; width: min(100%, 900px); margin: 0 auto; gap: 5px; }
+.hale-chat-detail-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.72rem; font-weight: 600; }
+.hale-chat-detail-label select { width: auto; min-height: 30px; padding: 4px 26px 4px 9px; border-radius: 7px; font-size: 0.75rem; }
+.hale-chat-composer-box { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); transition: border-color 150ms ease, box-shadow 150ms ease; }
 .hale-chat-composer-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent); }
-.app-shell .hale-chat-composer-box textarea { display: block; width: 100%; min-height: 62px; max-height: 180px; padding: 15px 58px 14px 16px; border: 0; outline: 0; resize: none; background: transparent; color: var(--ink); line-height: 1.5; field-sizing: content; }
+.app-shell .hale-chat-composer-box textarea { display: block; width: 100%; min-height: 44px; max-height: 150px; padding: 11px 14px 5px; border: 0; outline: 0; resize: none; background: transparent; color: var(--ink); line-height: 1.45; field-sizing: content; }
 .app-shell .hale-chat-composer-box textarea:focus { box-shadow: none; }
-.hale-chat-send { position: absolute; right: 10px; bottom: 10px; display: grid; place-items: center; width: 38px; min-width: 38px; height: 38px; min-height: 38px; padding: 0; border: 1px solid transparent; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
+.hale-chat-composer-controls { min-height: 38px; padding: 2px 7px 7px 11px; }
+.hale-chat-composer-actions > span { color: var(--muted); font-size: 0.7rem; white-space: nowrap; }
+.hale-chat-send { display: grid; place-items: center; width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; border: 1px solid transparent; border-radius: 50%; background: var(--accent); color: var(--on-accent); }
 .hale-chat-send:hover:not(:disabled) { background: var(--accent-dark); }
 .hale-chat-send:disabled { border-color: var(--line); background: var(--panel); color: var(--muted); }
 .hale-chat-send > svg { width: 17px; height: 17px; }
-.hale-chat-form-meta { align-items: flex-start; }
-.hale-chat-form-meta > span { flex: 0 0 auto; color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
+.hale-chat-help { padding: 0 4px; }
 
 @media (max-width: 640px) {
   .hale-chat { height: 680px; max-height: none; min-height: 580px; }
-  .hale-chat-chrome { padding: 18px 16px 14px; }
+  .hale-chat-chrome { padding: 10px 12px 9px; }
   .hale-chat-heading { align-items: flex-start; }
-  .hale-chat-heading-actions { align-items: flex-end; flex-direction: column; gap: 4px; }
-  .hale-chat-clear { min-height: 32px; }
-  .hale-chat-intro { font-size: 0.82rem; }
-  .hale-chat-log { padding: 22px 12px 30px; scrollbar-gutter: auto; }
-  .hale-chat-column { gap: 26px; }
+  .hale-chat-heading-title { gap: 8px; }
+  .hale-chat-heading-actions { align-items: center; gap: 4px; }
+  .hale-chat-mode { padding: 5px 8px; }
+  .hale-chat-clear { width: 32px; min-height: 32px; padding: 5px; }
+  .hale-chat-clear > span { display: none; }
+  .hale-chat-intro { font-size: 0.75rem; }
+  .hale-chat-log { padding: 14px 12px 18px; scrollbar-gutter: auto; }
+  .hale-chat-column { gap: 20px; }
   .hale-chat-suggestions { grid-template-columns: 1fr; }
   .hale-chat-user { max-width: 88%; }
   .hale-chat-answer { grid-template-columns: 30px minmax(0, 1fr); gap: 10px; }
@@ -130,7 +134,7 @@
   .hale-chat-chart { padding: 12px; }
   .hale-bar-row { grid-template-columns: 1fr auto; }
   .hale-bar-row > i { grid-row: 2; grid-column: 1 / -1; }
-  .hale-chat-composer-dock { padding: 10px 14px 14px; }
-  .hale-chat-form-meta { gap: 8px; }
-  .hale-chat-help { font-size: 0.72rem; }
+  .hale-chat-composer-dock { padding: 7px 10px 9px; }
+  .hale-chat-composer-actions { gap: 7px; }
+  .hale-chat-help { font-size: 0.68rem; }
 }
