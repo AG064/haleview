@@ -16,7 +16,7 @@ await build({
     export {AppShell} from "./components/AppShell";
     export {PageDataState} from "./components/PageDataState";
     export {ProfileSetupScreen} from "./screens/ProfileSetupScreen";
-    export {DashboardOverview} from "./screens/DashboardScreens";
+    export {DashboardOverview, HaleScreen} from "./screens/DashboardScreens";
     export {CombineRecipeIcon} from "./components/CombineRecipeIcon";
     export {HaleChatChart} from "./components/HaleChatChart";
     export {initialForm, initialPrivacy} from "./app-data";
@@ -58,6 +58,31 @@ test("Hale has one labelled navigation entry and only the correct page is active
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
     assert.ok(html.includes("hale-nav"));
   } finally { globalThis.document = previousDocument; }
+});
+
+test("Hale separates chat and guidance into accessible views with chat selected first", () => {
+  const html = render(ui.HaleScreen, {
+    guidance: {
+      generatedAt: "2026-09-11T10:00:00Z",
+      profileUpdatedAt: "2026-09-11T09:00:00Z",
+      source: "local",
+      goal: "wellbeing",
+      items: [],
+      summaries: {weekly: "No weekly summary yet.", monthly: "No monthly summary yet."},
+    },
+    allowOnlineAi: false,
+    recommendationRefreshing: false,
+    onRefresh: () => {},
+    request: async () => {},
+  });
+  assert.ok(html.includes('role="tablist"'));
+  assert.ok(html.includes('aria-label="Hale views"'));
+  const chatTab = html.match(/<button[^>]*id="hale-chat-tab"[^>]*>/)?.[0];
+  const guidanceTab = html.match(/<button[^>]*id="hale-guidance-tab"[^>]*>/)?.[0];
+  assert.ok(chatTab?.includes('aria-selected="true"') && chatTab.includes('tabindex="0"'));
+  assert.ok(guidanceTab?.includes('aria-selected="false"') && guidanceTab.includes('tabindex="-1"'));
+  assert.match(html, /aria-labelledby="hale-chat-tab"[^>]*id="hale-chat-panel"[^>]*role="tabpanel"/);
+  assert.match(html, /aria-labelledby="hale-guidance-tab"[^>]*hidden=""[^>]*id="hale-guidance-panel"[^>]*role="tabpanel"/);
 });
 
 test("guest AI permission is explained, disabled and cannot appear checked", () => {
