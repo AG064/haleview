@@ -16,6 +16,9 @@
 .app-shell .product-name { gap: 7px; white-space: nowrap; }
 .app-shell .product-name > span { display: none; }
 .app-shell .guide-button { min-height: 36px; padding: 7px 8px !important; border-color: transparent; background: transparent; }
+.app-shell .main-menu-toggle { display: none; width: 44px; height: 44px; padding: 0; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); }
+.app-shell .main-menu-toggle:hover { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+.app-shell .main-menu-toggle svg { width: 20px; height: 20px; }
 .app-shell .top-account > .text-button { white-space: nowrap; }
 .app-shell .top-account :is(.theme-toggle, .account-label) { min-height: 36px; }
 .app-shell :is(.guide-button, .theme-toggle, .account-label) svg { width: 17px; height: 17px; }
@@ -92,6 +95,37 @@
   .app-shell .top-account::before { left: 17px; }
 }
 
+@media (max-width: 1100px) {
+  .app-shell .topbar { grid-template-columns: max-content minmax(0, 1fr) max-content; }
+  .app-shell .product-name { padding-right: 0; }
+  .app-shell .product-name::after,
+  .app-shell .top-account::before { display: none; }
+  .app-shell .top-account { gap: 6px; padding-left: 0; }
+  .app-shell .top-account .account-label > span { display: none; }
+  .app-shell .main-menu-toggle { display: inline-flex; flex: 0 0 auto; }
+  .app-shell .main-tabs {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 8px);
+    right: 0;
+    display: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(560px, 100%);
+    margin: 0;
+    padding: 8px;
+    gap: 4px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: visible;
+    background: var(--panel);
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--ink) 16%, transparent);
+  }
+  .app-shell .main-tabs.is-open { display: grid; }
+  .app-shell .main-tabs > button { justify-content: flex-start; width: 100%; min-height: 44px; padding: 10px 12px; }
+  .app-shell .main-tabs > .hale-nav.active { padding-right: 12px; }
+  .app-shell .main-tabs > .hale-nav.active span::after { right: -14px; }
+}
+
 @media (max-width: 680px) {
   .app-shell .dashboard-heading { flex-direction: column; align-items: stretch; gap: 16px; }
   .app-shell { width: calc(100% - 24px); padding-top: 0; }
@@ -100,8 +134,8 @@
   .app-shell .product-name::after { display: none; }
   .app-shell .top-account { grid-column: 3; grid-row: 1; width: auto; gap: 4px; padding-left: 0; }
   .app-shell .top-account::before { display: none; }
-  .app-shell .main-tabs { grid-column: 2; grid-row: 1; }
-  .app-shell .main-tabs > button { min-height: 36px; padding: 7px 8px; }
+  .app-shell .main-tabs { grid-column: auto; grid-row: auto; }
+  .app-shell .main-tabs > button { min-height: 44px; padding: 10px 12px; }
   .app-shell .product-name > span,
   .app-shell .top-account .account-label > span,
   .app-shell .guide-button > span { display: none; }
