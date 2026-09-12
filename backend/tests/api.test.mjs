@@ -4,6 +4,7 @@ import {randomUUID} from "node:crypto";
 import {cleanup, profileInput} from "./environment.mjs";
 
 const {default: app} = await import("../dist/app.js");
+const {getLatestEmail} = await import("../dist/auth.js");
 let server;
 let base;
 before(async () => {
@@ -21,7 +22,7 @@ async function account() {
   const credentials = {email: `test-${randomUUID()}@example.test`, password: `Fixture-${randomUUID()}!`};
   const registered = await request("/api/auth/register", credentials);
   assert.equal(registered.status, 201);
-  await request(`/api/auth/verify${new URL(registered.body.verificationLink).search}`);
+  await request(`/api/auth/verify${new URL(getLatestEmail().link).search}`);
   const session = await request("/api/auth/login", credentials);
   assert.equal(session.status, 200);
   return session.body.accessToken;

@@ -1,5 +1,6 @@
 import express, { type Request, type Response } from "express";
 import { AuthError, authMiddleware } from "../auth.js";
+import { accountAccess, guardNutritionProvider } from "../online-access.js";
 import { getPrivacy, getProfile } from "../storage.js";
 import { CatalogValidationError, getCatalogStats, getRecipe, getRecipeEnhancedNutrition, recipeMeetsFoodRestrictions, searchIngredients } from "./catalog.js";
 import { deriveNutritionDefaults, parseNutritionPreferences } from "./preferences.js";
@@ -71,7 +72,13 @@ import { searchRecipeGroups } from "./recipe-groups.js";
 import { addRecipeFavourite, listRecipeFavourites, removeRecipeFavourite } from "./favourites.js";
 
 const mealGenerationCache = new GenerationCache<MealDraftResult>({ maxEntries: 50, ttlMs: 15 * 60 * 1000 });
-const mealGenerationProvider = createDeepSeekNutritionProviderFromEnv();
+
+function requestProvider(request: Request, userId: number) {
+  const access = accountAccess(userId, request.headers.authorization);
+  access.check();
+  const privacy = getPrivacy(userId);
+  return guardNutritionProvider(privacy?.dataForRecommendations ? createDeepSeekNutritionProviderFromEnv() : null, access.checkOnline);
+}
 
 function authUserId(request: Request): number {
   const userId = (request as { authUserId?: number }).authUserId;
@@ -265,9 +272,9 @@ export function createNutritionRouter(): express.Router {
   router.post("/creations", authMiddleware, async (request, response) => {
     try {
       const userId = authUserId(request);
-      const privacy = getPrivacy(userId);
-      response.status(201).json(await generateRecipeCreation(objectBody(request), { userId, preferences: savedPreferences(userId),
-        provider: privacy?.consentGiven === true && privacy.dataForRecommendations === true ? mealGenerationProvider : null }));
+      const result = await generateRecipeCreation(objectBody(request), { userId, preferences: savedPreferences(userId), provider: requestProvider(request, userId) });
+      accountAccess(userId, request.headers.authorization).check();
+      response.status(201).json(result);
     } catch (error) { sendNutritionError(error, response, "The recipe could not be created. Try again shortly."); }
   });
   router.get("/creations/:id", authMiddleware, (request, response) => {
@@ -450,7 +457,8 @@ export function createNutritionRouter(): express.Router {
       const privacy = getPrivacy(userId);
       const onlineAllowed = privacy?.consentGiven === true && privacy.dataForRecommendations === true;
       const progress = buildNutritionProgress({ profile, preferences, records: listIntakeRecords(userId, { limit: 1000 }) });
-      const summary = await buildNutritionSummary(progress, profile, preferences, { provider: onlineAllowed ? mealGenerationProvider : null });
+      const summary = await buildNutritionSummary(progress, profile, preferences, { provider: requestProvider(request, userId) });
+      accountAccess(userId, request.headers.authorization).check();
       response.json({ summary, progress, message: progress.today.recordCount === 0 ? "Record a meal before requesting an online nutrition review." : summary.source === "local"
         ? onlineAllowed ? "Online nutrition review could not complete. Your calculated local review is available." : "Local review is active. Online AI is not enabled."
         : "DeepSeek selected suggestions from the calculated review." });
@@ -513,7 +521,6 @@ export function createNutritionRouter(): express.Router {
     try {
       const userId = authUserId(request);
       const body = objectBody(request);
-      const privacy = getPrivacy(userId);
       const result = await generateCustomRecipe({
         query: body.query as string,
         baseRecipeId: body.baseRecipeId as string | undefined,
@@ -522,8 +529,9 @@ export function createNutritionRouter(): express.Router {
       }, {
         userId,
         preferences: savedPreferences(userId),
-        provider: privacy?.consentGiven === true && privacy.dataForRecommendations === true ? mealGenerationProvider : null,
+        provider: requestProvider(request, userId),
       });
+      accountAccess(userId, request.headers.authorization).check();
       response.status(201).json(result);
     } catch (error) {
       sendNutritionError(error, response, "The custom recipe could not be created.");
@@ -555,12 +563,13 @@ export function createNutritionRouter(): express.Router {
       const userId = authUserId(request);
       const body = objectBody(request);
       if (typeof body.ingredientId !== "string") throw new CustomRecipeError("Choose one recipe ingredient.");
-      const privacy = getPrivacy(userId);
-      response.json(await getIngredientSubstitutions(paramValue(request, "id"), body.ingredientId, {
+      const result = await getIngredientSubstitutions(paramValue(request, "id"), body.ingredientId, {
         userId,
         preferences: savedPreferences(userId),
-        provider: privacy?.consentGiven === true && privacy.dataForRecommendations === true ? mealGenerationProvider : null,
-      }));
+        provider: requestProvider(request, userId),
+      });
+      accountAccess(userId, request.headers.authorization).check();
+      response.json(result);
     } catch (error) {
       sendNutritionError(error, response, "Ingredient substitutions could not be found.");
     }
@@ -616,18 +625,17 @@ export function createNutritionRouter(): express.Router {
       const userId = authUserId(request);
       const body = objectBody(request);
       const preferences = savedPreferences(userId);
-      const privacy = getPrivacy(userId);
-      const useOnlineProvider = privacy?.consentGiven === true && privacy.dataForRecommendations === true;
       const plan = await generateMealPlan({
         duration: planDuration(body.duration),
         startDate: startDateValue(body.startDate),
         health: healthForPlan(userId),
         preferences,
       }, {
-        provider: useOnlineProvider ? mealGenerationProvider : null,
+        provider: requestProvider(request, userId),
         cache: mealGenerationCache,
         userId,
       });
+      accountAccess(userId, request.headers.authorization).check();
       response.status(201).json({ plan: saveMealPlan(userId, plan, "Generated plan") });
     } catch (error) {
       sendNutritionError(error, response, "Meal plan could not be generated.");
@@ -770,17 +778,17 @@ export function createNutritionRouter(): express.Router {
         response.status(404).json({ error: "Meal plan not found." });
         return;
       }
-      const privacy = getPrivacy(userId);
       const generated = await generateMealPlan({
         duration: current.duration,
         startDate: current.startDate,
         health: healthForPlan(userId),
         preferences: savedPreferences(userId),
       }, {
-        provider: privacy?.consentGiven === true && privacy.dataForRecommendations === true ? mealGenerationProvider : null,
+        provider: requestProvider(request, userId),
         cache: mealGenerationCache,
         userId,
       });
+      accountAccess(userId, request.headers.authorization).check();
       response.json({ plan: saveMealPlan(userId, { ...generated, id: current.id, createdAt: current.createdAt }, "Regenerated plan") });
     } catch (error) {
       sendNutritionError(error, response, "The meal plan could not be regenerated.");

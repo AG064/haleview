@@ -10,7 +10,7 @@ The application is not a medical service. Check health advice before using it.
 
 ## Chat with Hale
 
-Open Hale after completing your profile. You can ask about health metrics, progress, meal plans, recipe ingredients and preparation, recorded nutrition, or general wellness. For example, ask "What nutrients are in my breakfast?" and then "Is that enough protein?". The follow-up stays attached to that breakfast. Existing guidance remains below the conversation.
+Open Hale after completing your profile. You can ask about health metrics, progress, meal plans, recipe ingredients and preparation, recorded nutrition, or general wellness. For example, ask "What nutrients are in my breakfast?" and then "Is that enough protein?". The follow-up stays attached to that breakfast. Chat and Guidance have separate tabs.
 
 Hale can draw three conversational charts from saved data. Ask "Show me my weight trend this month" for a line chart, "Show how my protein intake compares with my target today" for a bar chart, or "Show the breakdown of my macronutrients today" for a pie chart. A protein or weight discussion can offer a related chart prompt without opening one automatically.
 
@@ -46,15 +46,15 @@ Online chat reuses the configured DeepSeek provider and the Online AI consent se
 
 A request allows at most two tool rounds, a final response and one format repair within a shared 55-second deadline. Context size and total returned token usage are bounded. The backend stores provider token totals with the turn for inspection. One account can have one active reply, and the service caps simultaneous active accounts.
 
-Conversation history is encrypted at rest and retained until the account clears it. The browser initially loads forty turns and can load earlier messages. Personal data export includes the full conversation. The provider receives up to five full previous turns, using the latest two and the most recent turns related to the current topic. Older turns are compacted when ten turns accumulate or when the pending context reaches a size or provider-token threshold. The deterministic summary keeps bounded user-stated preferences and the latest server-owned reference for each topic. It does not copy earlier measurements because current values are retrieved again. Less relevant topics are reduced to topic labels, while the current topic keeps its compact reference and detailed recent turns. Loading earlier messages does not expand provider context. The summary is encrypted and is removed with chat history.
+Conversation history is encrypted at rest and retained until the account clears it. The browser initially loads forty turns and can load earlier messages. Personal data export includes the full conversation. The provider receives up to five previous message/reply pairs, using the latest two and the most recent pairs related to the current topic. Historical assistant messages follow the same reply contract as new answers. Data references are supplied separately, and current measurements are fetched again. Older turns are compacted when ten turns accumulate or when the pending context reaches a size or provider-token threshold. The deterministic summary keeps bounded user-stated preferences and the latest server-owned reference for each topic. It does not copy earlier measurements. Less relevant topics are reduced to topic labels, while the current topic keeps its compact reference and recent messages. Loading earlier messages does not expand provider context. The summary is encrypted and is removed with chat history.
 
 ### Errors and boundaries
 
 Without online access, labelled local replies can still retrieve the same saved data and general guidance. Provider timeouts, rejected requests, invalid function calls and unusable output return a clear fallback without exposing provider credentials or internal error text. Request identifiers prevent a retry from creating a second saved reply. Input errors preserve the browser draft.
 
-The assistant blocks contact details and credential-like text, keeps retrieved text separate from instructions, and refuses requests for other people's data. Medical concerns receive appropriate professional-care guidance. General sleep and movement guidance is informed by the [NHS sleep guide](https://www.nhs.uk/every-mind-matters/mental-health-issues/sleep/) and [NHS back-pain guidance](https://www.nhs.uk/conditions/back-pain/). Hale cannot diagnose or prescribe treatment.
+The assistant rejects recognized email, phone and credential formats, keeps retrieved text and conversation notes out of system instructions, and refuses requests for other people's data. These text checks cannot identify every possible contact detail or medical concern. Do not paste private contact information into chat. Recognized urgent symptoms receive a fixed response directing the person to medical help. General sleep and movement guidance is informed by the [NHS sleep guide](https://www.nhs.uk/every-mind-matters/mental-health-issues/sleep/) and [NHS back-pain guidance](https://www.nhs.uk/conditions/back-pain/). Hale cannot diagnose or prescribe treatment.
 
-Sign-out revokes the server session and its refresh-token lineage. Password reset revokes all account sessions. Chat checks authorization again after provider requests, so a reply that finishes after sign-out is not saved or returned. Separate signed-in sessions are not ended by a normal sign-out on one device. If the server cannot be reached, the interface states that only the local session was cleared.
+Sign-out revokes the server session and its refresh-token lineage and clears temporary password fields. Password reset revokes all account sessions. Browser requests stay attached to the session that started them, including retries. Chat and online generation check current authorization and consent around provider requests. A revoked session cannot save or receive a delayed result. Separate signed-in sessions are not ended by a normal sign-out on one device. If the server cannot be reached, the interface states that only the local session was cleared. The authenticator step applies to password, Google and GitHub sign-in when enabled.
 
 Line charts use recorded metric dates and values without filling missing dates. Protein bar charts compare recorded grams with the saved target for the same period. Macro pie charts show calculated energy shares using four kilocalories per gram for protein and carbohydrate and nine for fat. Every chart includes its source values as accessible text. The model cannot supply chart values.
 
@@ -115,13 +115,21 @@ docker compose down
 
 Docker stores the local database in a named volume. The database is not stored in the source folder.
 
+For a local visit without an email service, create an account and ask the person running Docker to provide its verification link. The local operator can read the latest verification or reset message with:
+
+```text
+docker compose exec backend node -e "import('./dist/auth.js').then(m => console.log(m.getLatestEmail()))"
+```
+
+This command exposes a private authentication link to the operator. Use it only for a local account you control. Links are never returned by the HTTP API, and there is no HTTP outbox. For public access, configure `PUBLIC_APP_URL`, the registered OAuth callback URLs and any required service-secret files outside the repository. Email registration and recovery require configured email delivery at a public origin; Google or GitHub sign-in can be used when those providers are configured.
+
 When running the backend without Docker, data is stored in `.haleview` under the user's home directory. Set `DATA_FILE` to an external database path to use an existing database. Keep its encryption and signing key files with it.
 
 ## Optional online AI
 
 The application can run without an AI key. Local generation is used when online AI is not configured.
 
-Keep all keys and environment files outside this repository. Store the DeepSeek key in a file that only the backend can read. Set `DEEPSEEK_API_KEY_FILE` in an external environment file to the path of that key file inside the backend container. Pass the external environment file to Compose when the application starts.
+Keep all keys and environment files outside this repository. Store the DeepSeek key in a file that only the backend can read. Set `DEEPSEEK_API_KEY_FILE` in an external environment file to the path of that key file inside the backend container. Mount the host key file at that path with a read-only bind in an external Compose override; setting the path alone does not mount it. Pass the external environment and override files to Compose when the application starts.
 
 Do not put the key in the Compose environment or in this repository. The backend reads the key file when it needs the provider. Set `DEEPSEEK_MODEL` in the external environment file when a different model is required. The Compose file supplies a default model name when this value is not set.
 
@@ -131,7 +139,7 @@ The application shows whether Online AI is available. The key is not placed in f
 
 Haleview keeps the main pages locked until the profile is complete. The Profile page and Guide stay available. Profile entries remain as a draft while the person moves through the setup steps. Haleview saves the complete profile only after Data use is confirmed on the final step.
 
-The Guide contains ten short tasks. Each task opens the related page when that page is available. The Dashboard contains a short daily summary. Detailed nutrition and progress views have their own pages.
+The Guide contains ten short tasks. Each task opens the related page when that page is available. The Dashboard contains a short daily summary. Overview, Progress and Records share a persistent current-date heading and animated switch. The main menu collapses into a hamburger menu when the available width is limited.
 
 ## Interface icons
 
@@ -280,14 +288,14 @@ Nutrition generation sends only the health fields needed for planning and exclud
 
 Provider JSON and function arguments are checked before use. Only the listed nutrition functions can run. Recipe selections must use IDs from the local retrieval result. Nutrition calls must match the selected recipes and serving sizes.
 
-The backend handles timeouts, rate limits, connection errors, rejected requests, and malformed responses with stable error codes. A matching cached result is used first. If none is available, the backend creates a local result from the same saved preferences and catalogue.
+The backend handles timeouts, rate limits, connection errors, rejected requests, and malformed responses with stable error codes. After a recoverable online meal-planning failure, it tries a matching cached result before creating a local result from the same saved preferences and catalogue. New recipe creation requires a valid online result and reports failure instead of substituting a local recipe.
 
 ## Main areas
 
 - Access: account access and guest access.
 - Profile: health data, goals, activity, and food preferences.
 - Dashboard: today's health, meal, and activity summary.
-- Hale: health guidance and optional AI nutrition review, accessible from the main navigation.
+- Hale: conversation with saved history, plus health guidance and optional nutrition review in a separate tab.
 - Records: weight and activity records.
 - Progress: health changes over time.
 - Nutrition: intake, current targets, trends, micronutrients, and feedback.
@@ -306,7 +314,7 @@ The data model uses these units:
 - Energy: kilocalories.
 - Time: minutes.
 
-Dates and times use ISO 8601. The user timezone is saved with nutrition settings.
+Stored values, exports and dated records use ISO 8601. The dashboard heading displays a readable local weekday and date. The user timezone is saved with nutrition settings.
 New plans retain that timezone and each meal's ISO scheduled instant alongside its local date and time. Account activity entries use the saved timezone rather than the browser timezone. Nonexistent daylight-saving times are rejected; repeated times use the earlier occurrence. Older saved plans remain readable, and an old nonexistent local time is marked for correction.
 
 Recipe and ingredient text use deterministic 48-dimensional hash vectors. Recipe ranking combines cosine similarity with text matches and permitted personalization signals. Ingredient ranking also uses cosine similarity, with exact-name and word-match priority. At least one text match is required so vector collisions alone cannot turn an unavailable ingredient into a result.
@@ -332,7 +340,7 @@ Community records contain a recipe subject, one to five stars, helpful state, de
 - Micronutrient progress has reference bars, low-intake guidance, safe recipe suggestions, and recipe search filters.
 - Community RAG uses ratings, reviews, moderation state, verified labels, preference history, and personal feedback in retrieval ranking.
 - Recipe results include calculated nutrient density, satiety, and ingredient diversity. Meal plans include calculated balance, diversity, micronutrient coverage, and trend fields. These fields use catalogue nutrition. They do not make glycaemic, antioxidant, or environmental claims.
-- Account data is isolated, protected at rest, and excluded from prompts unless the user has confirmed recommendation data use.
+- Account queries are isolated by ownership and private stored fields are encrypted. The default encryption key is beside the database, so the Docker volume and its backups must stay private. Personal data is excluded from online prompts unless the user has confirmed recommendation data use.
 
 ## Code layout
 
@@ -371,6 +379,6 @@ npm run build
 
 The backend build copies the catalogue into its output directory. Tests use temporary databases and mocked provider responses; they do not need an API key, external account, or a running application. Temporary test data is removed after each test process.
 
-Backend tests cover catalogue contracts, ingredient and recipe retrieval, preference reuse, nutrition function validation, daily and weekly plans, changes and restore, shopping lists, cooking-state validation, authentication boundaries, intake ownership, chart source values, context compression, topic selection, provider timeouts and errors, and cache recovery. Frontend tests cover pending and failed loads, the Hale navigation entry, guest AI controls, escaped error messages, ISO dates, chart accessibility, and the Combine icon. These tests complement manual browser checks; they do not prove that every generated cooking instruction is correct.
+Backend tests cover catalogue contracts, ingredient and recipe retrieval, preference reuse, nutrition function validation, daily and weekly plans, changes and restore, shopping lists, cooking-state validation, authentication boundaries, intake ownership, chart source values, context compression, topic selection, provider timeouts and errors, and cache recovery. Security regressions cover recovery-link privacy, OAuth second factors, consent withdrawal, logout during generation, symptom paraphrases and contact-data filtering. Frontend tests cover pending and failed loads, navigation and switches, guest AI controls, escaped error messages, dates, chart accessibility, and session-bound retries. These tests complement manual browser checks; they do not prove that every generated cooking instruction is correct.
 
 GitHub Actions runs the same Docker checks for main-branch changes and pull requests, using read-only repository permissions and no provider credentials.

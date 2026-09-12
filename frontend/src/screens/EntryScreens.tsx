@@ -104,7 +104,6 @@ interface AccessScreenProps {
   resetPassword: string;
   twoFactorChallenge: string | null;
   twoFactorCode: string;
-  verificationLink: string | null;
   onAccountModeChange: (mode: AccountMode) => void;
   onAccountEmailChange: (value: string) => void;
   onAccountPasswordChange: (value: string) => void;
@@ -181,7 +180,6 @@ export function AccessScreen(props: AccessScreenProps) {
           </form>
         )}
 
-        {props.verificationLink && <p className="account-link"><a href={props.verificationLink}>Verify email</a></p>}
         {props.accountError && <p className="account-message error-text" role="alert">{props.accountError}</p>}
         {props.accountMessage && <p className="account-message" role="status">{props.accountMessage}</p>}
 

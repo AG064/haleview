@@ -85,14 +85,30 @@ export function AppShell({ route, hasProfile, guestMode, signedIn, onNavigate, o
         </div>
       </header>
 
-      {isDashboardRoute(route) && route !== "dashboard" && route !== "hale" && <DashboardNavigation route={route} guestMode={guestMode} onNavigate={onNavigate} />}
+      {isDashboardRoute(route) && route !== "hale" && <DashboardHeader route={route} onNavigate={onNavigate} />}
 
       {children}
     </main>
   );
 }
 
-export function DashboardNavigation({ route, onNavigate }: Pick<AppShellProps, "route" | "guestMode" | "onNavigate">) {
+export function DashboardHeader({ route, onNavigate }: Pick<AppShellProps, "route" | "onNavigate">) {
+  const today = new Date();
+  const dateTime = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const dateLabel = new Intl.DateTimeFormat("en", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(today);
+
+  return (
+    <div className="dashboard-heading">
+      <div className="dashboard-heading-copy">
+        <p className="eyebrow">Dashboard</p>
+        <h2>Today is <time dateTime={dateTime}>{dateLabel}</time></h2>
+      </div>
+      <DashboardNavigation route={route} onNavigate={onNavigate} />
+    </div>
+  );
+}
+
+export function DashboardNavigation({ route, onNavigate }: Pick<AppShellProps, "route" | "onNavigate">) {
   const selectedIndex = route === "progress" ? 1 : route === "records" ? 2 : 0;
   return (
         <nav className="dashboard-tabs segmented-switch" aria-label="Dashboard pages" data-segments="3" data-index={selectedIndex}>

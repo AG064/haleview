@@ -73,6 +73,20 @@ test("dashboard navigation uses a three-position segmented control", () => {
   assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
 });
 
+test("dashboard routes keep one shared dated heading around the navigation", () => {
+  const previousDocument = globalThis.document;
+  globalThis.document = {documentElement: {dataset: {theme: "light"}}};
+  try {
+    for (const [route, index] of [["dashboard", "0"], ["progress", "1"], ["records", "2"]]) {
+      const html = render(ui.AppShell, {route, hasProfile: true, guestMode: false, signedIn: true});
+      assert.equal((html.match(/class="dashboard-heading"/g) ?? []).length, 1);
+      assert.equal((html.match(/Today is /g) ?? []).length, 1);
+      assert.ok(html.includes(`<time dateTime="`));
+      assert.ok(html.includes(`data-index="${index}"`));
+    }
+  } finally { globalThis.document = previousDocument; }
+});
+
 test("app shell exposes an accessible collapsed main menu control", () => {
   const previousDocument = globalThis.document;
   globalThis.document = {documentElement: {dataset: {theme: "light"}}};

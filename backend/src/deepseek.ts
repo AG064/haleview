@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { AuthError } from "./auth.js";
 import { containsPersonalIdentifier, type HealthProfile } from "./profile.js";
 import { buildGroundedSummaries, type Guidance, type GuidanceHistory, type RecommendationItem, type RecommendationPriority } from "./recommendations.js";
 
@@ -436,7 +437,7 @@ async function requestDeepSeekGuidance(
   return parseModelResponse(parsed, profile, history);
 }
 
-export async function generateDeepSeekGuidance(profile: HealthProfile, history: GuidanceHistory): Promise<Guidance> {
+export async function generateDeepSeekGuidance(profile: HealthProfile, history: GuidanceHistory, checkOnline: () => void = () => {}): Promise<Guidance> {
   const config = getDeepSeekConfig();
   if (!config) {
     throw new DeepSeekGenerationError(
@@ -448,7 +449,9 @@ export async function generateDeepSeekGuidance(profile: HealthProfile, history: 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
   try {
+    checkOnline();
     const firstAttempt = await requestDeepSeekGuidance(config, profile, history, controller.signal);
+    checkOnline();
     if (firstAttempt.guidance) {
       return firstAttempt.guidance;
     }
@@ -459,12 +462,13 @@ export async function generateDeepSeekGuidance(profile: HealthProfile, history: 
       controller.signal,
       firstAttempt.correction
     );
+    checkOnline();
     if (!repairAttempt.guidance) {
       throw invalidResponseError();
     }
     return repairAttempt.guidance;
   } catch (error) {
-    if (error instanceof DeepSeekGenerationError) {
+    if (error instanceof DeepSeekGenerationError || error instanceof AuthError) {
       throw error;
     }
     if (error instanceof Error && error.name === "AbortError") {

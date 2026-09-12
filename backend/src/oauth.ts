@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { AuthError, findOrCreateOAuthUser, issueOAuthTokens, type AuthTokens } from "./auth.js";
+import { AuthError, findOrCreateOAuthUser, issueOAuthTokens, type AuthTokens, type TwoFactorLoginChallenge } from "./auth.js";
 import { database } from "./storage.js";
 import { protectStoredText, protectedLookupHash, unprotectStoredText } from "./protected-data.js";
 
@@ -255,7 +255,7 @@ export async function completeOAuth(providerInput: unknown, state: unknown, code
 
 
 }
-export function exchangeOAuthTicket(ticket: unknown): AuthTokens {
+export function exchangeOAuthTicket(ticket: unknown): AuthTokens | TwoFactorLoginChallenge {
   if (typeof ticket !== "string" || ticket.length < 20) {
     throw new AuthError(401, "The sign-in ticket is not valid.");
   }

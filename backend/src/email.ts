@@ -11,6 +11,10 @@ interface AuthEmailInput {
 
 export type EmailDelivery = "sent" | "local" | "failed";
 
+export function authEmailConfigured(): boolean {
+  return Boolean(readApiKey());
+}
+
 function readApiKey(): string {
   const keyFile = process.env.RESEND_API_KEY_FILE?.trim();
   if (keyFile) {

@@ -4,6 +4,7 @@ import {randomUUID} from "node:crypto";
 import {cleanup, preferences, profileInput} from "./environment.mjs";
 
 const {default: app} = await import("../dist/app.js");
+const {getLatestEmail} = await import("../dist/auth.js");
 const {database, saveProfile} = await import("../dist/storage.js");
 const {executeAssistantTool} = await import("../dist/assistant/tools.js");
 const {sendChatMessage} = await import("../dist/assistant/conversation.js");
@@ -121,8 +122,9 @@ test("provider context retains five prior turns and is isolated from another acc
   for (let index = 0; index < 6; index++) await sendChatMessage(1001, input(`My weight please, question ${index}`), {provider: null, now});
   const provider = scriptedProvider([(messages) => {
     const users = messages.filter(item => item.role === "user");
-    assert.equal(users.length, 6);
-    assert.equal(users[0].content, "My weight please, question 1");
+    assert.deepEqual(users.filter(item => item.content.startsWith("My weight please")).map(item => item.content),
+      Array.from({length: 5}, (_, index) => `My weight please, question ${index + 1}`));
+    assert.equal(users.at(-1).content, "What about that again?");
     assert.doesNotMatch(JSON.stringify(messages), /94 kg/);
     return {content: null, toolCalls: [call("get_health_metrics", {metrics: ["weight"]})], tokens: 20};
   }, () => completion("Here is your current saved weight.")]);
@@ -207,7 +209,8 @@ test("HTTP history and chat require authentication and reject client-supplied us
   assert.equal((await send("/api/assistant", "POST", input("a".repeat(40000)))).status, 413);
   const credentials = {email: `chat-${randomUUID()}@example.test`, password: `Fixture-${randomUUID()}!`};
   const registered = await send("/api/auth/register", "POST", credentials);
-  await send(`/api/auth/verify${new URL(registered.body.verificationLink).search}`);
+  assert.equal(registered.status, 201);
+  await send(`/api/auth/verify${new URL(getLatestEmail().link).search}`);
   const session = await send("/api/auth/login", "POST", credentials);
   const token = session.body.accessToken;
   assert.ok(token);

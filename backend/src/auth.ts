@@ -10,7 +10,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { database } from "./storage.js";
-import { sendAuthEmail } from "./email.js";
+import { authEmailConfigured, sendAuthEmail } from "./email.js";
 import { migrateProtectedText, protectStoredText, protectedLookupHash, unprotectStoredText } from "./protected-data.js";
 
 const accessTokenSeconds = 15 * 60;
@@ -193,10 +193,6 @@ interface UserRow {
   two_factor_secret?: string | null;
 }
 
-function isDevelopment(): boolean {
-  return process.env.NODE_ENV !== "production";
-}
-
 function usesLocalPublicUrl(): boolean {
   try {
     const hostname = new URL(process.env.PUBLIC_APP_URL?.trim() || "http://127.0.0.1:5173").hostname;
@@ -204,6 +200,10 @@ function usesLocalPublicUrl(): boolean {
   } catch {
     return false;
   }
+}
+
+function checkEmailDelivery(): void {
+  if (!usesLocalPublicUrl() && !authEmailConfigured()) throw new AuthError(503, "Email delivery is not configured. Use an available sign-in provider or contact the operator.");
 }
 
 function nowIso(): string {
@@ -411,8 +411,10 @@ function issueTokens(userId: number, existingSessionId?: string | null, previous
   };
 }
 
-export function issueOAuthTokens(userId: number): AuthTokens {
-  return issueTokens(userId);
+export function issueOAuthTokens(userId: number): AuthTokens | TwoFactorLoginChallenge {
+  const user = database.prepare("SELECT id, two_factor_enabled, two_factor_secret FROM users WHERE id = ?").get(userId) as UserRow | undefined;
+  if (!user) throw new AuthError(401, "This account is not available.");
+  return completePrimaryAuthentication(user);
 }
 
 export function findOrCreateOAuthUser(emailInput: string): number {
@@ -436,7 +438,8 @@ function readJsonObject(input: unknown): Record<string, unknown> {
   return input as Record<string, unknown>;
 }
 
-export async function register(input: unknown): Promise<{ userId: number; email: string; verificationLink?: string }> {
+export async function register(input: unknown): Promise<{ userId: number; email: string; localDelivery: boolean }> {
+  checkEmailDelivery();
   const value = readJsonObject(input);
   const email = normalizeEmail(value.email);
   const password = passwordValue(value.password);
@@ -466,7 +469,7 @@ export async function register(input: unknown): Promise<{ userId: number; email:
   return {
     userId,
     email,
-    ...((isDevelopment() || (delivery === "local" && usesLocalPublicUrl())) ? { verificationLink: link } : {})
+    localDelivery: delivery === "local"
   };
 }
 
@@ -512,6 +515,10 @@ export function login(input: unknown): AuthTokens | TwoFactorLoginChallenge {
   if (!user.email_verified_at) {
     throw new AuthError(403, "Verify your email before signing in.");
   }
+  return completePrimaryAuthentication(user);
+}
+
+function completePrimaryAuthentication(user: UserRow): AuthTokens | TwoFactorLoginChallenge {
   if (user.two_factor_enabled === 1) {
     if (!user.two_factor_secret) {
       throw new AuthError(500, "Two-step sign-in is not ready.");
@@ -668,12 +675,13 @@ export function logoutSession(authorization: string | undefined): void {
   logout(userId, authorization);
 }
 
-export async function requestPasswordReset(input: unknown): Promise<{ resetLink?: string }> {
+export async function requestPasswordReset(input: unknown): Promise<{ localDelivery: boolean }> {
+  checkEmailDelivery();
   const value = readJsonObject(input);
   const email = normalizeEmail(value.email);
   const user = userByEmail(email);
   if (!user) {
-    return {};
+    return { localDelivery: !authEmailConfigured() };
   }
   const token = makeToken();
   database
@@ -682,7 +690,11 @@ export async function requestPasswordReset(input: unknown): Promise<{ resetLink?
   const link = publicUrl("/", token, "reset_token");
   storeEmail("password_reset", email, link);
   const delivery = await sendAuthEmail({ type: "password_reset", recipient: email, link });
-  return (isDevelopment() || (delivery === "local" && usesLocalPublicUrl())) ? { resetLink: link } : {};
+  if (delivery === "failed") {
+    database.prepare("UPDATE users SET reset_token_hash = NULL, reset_expires_at = NULL WHERE id = ?").run(user.id);
+    throw new AuthError(503, "Reset email could not be sent. Try again later.");
+  }
+  return { localDelivery: delivery === "local" };
 }
 
 export function confirmPasswordReset(input: unknown): void {

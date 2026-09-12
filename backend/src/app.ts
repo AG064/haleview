@@ -10,7 +10,6 @@ import {
   confirmPasswordReset,
   confirmTwoFactor,
   disableTwoFactor,
-  getLatestEmail,
   login,
   logoutSession,
   refresh,
@@ -40,6 +39,7 @@ import { beginOAuth, completeOAuth, exchangeOAuthTicket, oauthProviderStatus } f
 import { createNutritionRouter } from "./nutrition/routes.js";
 import { exportNutritionData } from "./nutrition/export.js";
 import { createAssistantRouter } from "./assistant/routes.js";
+import { accountAccess } from "./online-access.js";
 import { exportChatHistory } from "./assistant/store.js";
 const app = express();
 
@@ -66,7 +66,7 @@ app.post("/api/auth/register", async (request, response) => {
   try {
     const result = await register(request.body);
     response.status(201).json({
-      message: result.verificationLink ? "Open the verification link shown below." : "Check your email for the verification link.",
+      message: result.localDelivery ? "Ask the local operator for your verification link." : "Check your email for the verification link.",
       ...result
     });
   } catch (error) {
@@ -118,7 +118,7 @@ app.post("/api/auth/password-reset/request", async (request, response) => {
   try {
     const result = await requestPasswordReset(request.body);
     response.json({
-      message: result.resetLink ? "Open the reset link shown below." : "If the account exists, a reset link was sent.",
+      message: result.localDelivery ? "If the account exists, the local operator can provide its reset link." : "If the account exists, a reset link was sent.",
       ...result
     });
   } catch (error) {
@@ -241,14 +241,6 @@ app.get("/api/auth/config", (_request, response) => {
   });
 });
 
-app.get("/api/auth/dev/outbox/latest", (_request, response) => {
-  if (process.env.NODE_ENV === "production") {
-    response.status(404).json({ error: "Not found." });
-    return;
-  }
-  response.json({ email: getLatestEmail() });
-});
-
 app.post("/api/guest/profile", (request, response) => {
   try {
     response.json(saveGuestProfile(request.body));
@@ -342,10 +334,16 @@ app.post("/api/recommendations/refresh", authMiddleware, async (request, respons
     return;
   }
   try {
-    const generated = await generateDeepSeekGuidance(profile, getHistory(userId));
+    const access = accountAccess(userId, request.headers.authorization);
+    const generated = await generateDeepSeekGuidance(profile, getHistory(userId), access.checkOnline);
+    access.check();
     saveRecommendations(generated, userId);
     response.json({ recommendations: generated });
   } catch (error) {
+    if (error instanceof AuthError) {
+      sendAuthError(error, response);
+      return;
+    }
     if (error instanceof DeepSeekGenerationError) {
       const statusText = error.providerStatus === undefined ? "" : `, provider status ${error.providerStatus}`;
       console.warn(`DeepSeek guidance failed: ${error.code}${statusText}`);

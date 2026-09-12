@@ -333,7 +333,7 @@ test("an expired authorization during generation prevents saving or returning pr
 async function account(){
   const credentials={email:`core-${randomUUID()}@example.test`,password:`Fixture-${randomUUID()}!`};
   const registered=await auth.register(credentials);
-  auth.verifyEmail(new URL(registered.verificationLink).searchParams.get("token"));
+  auth.verifyEmail(new URL(auth.getLatestEmail().link).searchParams.get("token"));
   return {id:registered.userId,credentials,tokens:auth.login(credentials)};
 }
 
@@ -354,8 +354,8 @@ test("logout revokes the full refresh lineage and leaves separate sessions usabl
 
 test("password reset revokes access and refresh sessions, and session expiry is enforced",async()=>{
   const user=await account();
-  const reset=await auth.requestPasswordReset({email:user.credentials.email});
-  auth.confirmPasswordReset({token:new URL(reset.resetLink).searchParams.get("reset_token"),password:`Changed-${randomUUID()}!`});
+  await auth.requestPasswordReset({email:user.credentials.email});
+  auth.confirmPasswordReset({token:new URL(auth.getLatestEmail().link).searchParams.get("reset_token"),password:`Changed-${randomUUID()}!`});
   assert.equal(auth.accessTokenUserId(`Bearer ${user.tokens.accessToken}`),null);
   assert.throws(()=>auth.refresh({refreshToken:user.tokens.refreshToken}));
   const expired=await account();

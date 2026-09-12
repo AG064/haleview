@@ -3,6 +3,7 @@ import { getNutritionDefaults, getNutritionPreferences } from "./nutrition/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type AccountTokens,
+  type AccountLoginResult,
   type AuthenticatedSession,
   confirmTwoFactor,
   confirmPasswordReset,
@@ -37,7 +38,7 @@ import {
 import { appPath, appRouteFromPath, isEntryPath, type AppRoute } from "./routing";
 import Tutorial from "./Tutorial";
 import { LoadingDashboard } from "./components/LoadingDashboard";
-import { AppShell, DashboardNavigation } from "./components/AppShell";
+import { AppShell } from "./components/AppShell";
 import { initialForm, initialPrivacy, profileSteps } from "./app-data";
 import { localDateTimeValue } from "./format";
 import { clearGuestSession, markTutorialSeen, tutorialWasSeen } from "./guest-storage";
@@ -88,7 +89,6 @@ function App() {
   const [accountPassword, setAccountPassword] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [resetPassword, setResetPassword] = useState("");
-  const [verificationLink, setVerificationLink] = useState<string | null>(null);
   const [resetToken, setResetToken] = useState<string | null>(() => new URLSearchParams(window.location.search).get("reset_token"));
   const [accountMessage, setAccountMessage] = useState<string | null>(null);
   const [accountError, setAccountError] = useState<string | null>(null);
@@ -139,6 +139,8 @@ function App() {
   const restoreStartedRef = useRef(false);
 
   const applyAccountTokens = useCallback((tokens: AccountTokens) => {
+    setAccountPassword("");
+    setResetPassword("");
     sessionIssuedAtRef.current = Date.now();
     accessTokenRef.current = tokens.accessToken;
     refreshTokenRef.current = tokens.refreshToken;
@@ -153,6 +155,8 @@ function App() {
     accessTokenRef.current = null;
     refreshTokenRef.current = null;
     removeStoredRefreshToken();
+    setAccountPassword("");
+    setResetPassword("");
     setAccessToken(null);
     setRefreshToken(null);
     setAccessTokenExpiresIn(0);
@@ -166,8 +170,21 @@ function App() {
     setAccountMessage(message);
   }, []);
 
+  const acceptAccountLogin = useCallback((result: AccountLoginResult) => {
+    clearAccountSession("twoFactorRequired" in result ? "Enter the code from your authenticator." : "Signed in.");
+    setGuestMode(false);
+    if ("twoFactorRequired" in result) {
+      setEntryView("access");
+      setTwoFactorChallenge(result.challengeToken);
+    } else {
+      lastActivityRef.current = Date.now();
+      applyAccountTokens(result);
+    }
+  }, [applyAccountTokens, clearAccountSession]);
+
   useEffect(() => {
     authenticatedSessionRef.current = createAuthenticatedSession({
+      getSessionVersion: () => sessionVersionRef.current,
       getAccessToken: () => accessTokenRef.current,
       getRefreshToken: () => refreshTokenRef.current,
       refresh: async (token) => {
@@ -427,13 +444,7 @@ function App() {
     }
     setAccountBusy(true);
     exchangeOAuthTicket()
-      .then((result) => {
-        sessionVersionRef.current += 1;
-        lastActivityRef.current = Date.now();
-        applyAccountTokens(result);
-        setGuestMode(false);
-        setAccountMessage("Signed in.");
-      })
+      .then(acceptAccountLogin)
       .catch((oauthLoadError: unknown) => {
         setAccountError(oauthLoadError instanceof Error ? oauthLoadError.message : "Sign in failed.");
       })
@@ -441,7 +452,7 @@ function App() {
         setAccountBusy(false);
         window.history.replaceState({}, document.title, window.location.pathname);
       });
-  }, [applyAccountTokens]);
+  }, [acceptAccountLogin]);
 
 
   const update = <K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) => {
@@ -679,7 +690,7 @@ function App() {
     setAccountMessage(null);
     try {
       const result = await registerAccount(accountEmail, accountPassword);
-      setVerificationLink(result.verificationLink ?? null);
+      setAccountPassword("");
       setAccountMessage(result.message);
     } catch (createError: unknown) {
       setAccountError(createError instanceof Error ? createError.message : "The account could not be created.");
@@ -700,25 +711,7 @@ function App() {
     setAccountMessage(null);
     try {
       const result = await loginAccount(accountEmail, accountPassword);
-      if ("twoFactorRequired" in result) {
-        sessionVersionRef.current += 1;
-        accessTokenRef.current = null;
-        refreshTokenRef.current = null;
-        removeStoredRefreshToken();
-        setAccessToken(null);
-        setRefreshToken(null);
-        setAccessTokenExpiresIn(0);
-        setTwoFactorChallenge(result.challengeToken);
-        setTwoFactorCode("");
-        setAccountMessage("Enter the code from your authenticator.");
-      } else {
-        sessionVersionRef.current += 1;
-        lastActivityRef.current = Date.now();
-        setTwoFactorChallenge(null);
-        applyAccountTokens(result);
-        setGuestMode(false);
-        setAccountMessage("Signed in.");
-      }
+      acceptAccountLogin(result);
     } catch (loginError: unknown) {
       setAccountError(loginError instanceof Error ? loginError.message : "Sign in failed.");
     } finally {
@@ -909,7 +902,6 @@ function App() {
     setAccountMessage(null);
     try {
       const result = await requestPasswordReset(resetEmail);
-      setResetToken(result.resetLink ? new URL(result.resetLink).searchParams.get("reset_token") : null);
       setAccountMessage(result.message);
     } catch (resetError: unknown) {
       setAccountError(resetError instanceof Error ? resetError.message : "The reset request failed.");
@@ -979,7 +971,6 @@ function App() {
       resetPassword={resetPassword}
       twoFactorChallenge={twoFactorChallenge}
       twoFactorCode={twoFactorCode}
-      verificationLink={verificationLink}
       onAccountModeChange={setAccountMode}
       onAccountEmailChange={setAccountEmail}
       onAccountPasswordChange={setAccountPassword}
@@ -1024,7 +1015,7 @@ function App() {
         onBack={() => { setError(null); setProfileStep((current) => Math.max(0, current - 1)); }}
         onNext={moveToNextProfileStep}
       />}
-      {profile && activeRoute === "dashboard" && <DashboardOverview profile={profile} history={history} recommendations={recommendations} request={requestWithSession} signedIn={Boolean(accessToken)} onNavigate={navigate} navigation={<DashboardNavigation route={activeRoute} guestMode={guestMode} onNavigate={navigate} />} />}
+      {profile && activeRoute === "dashboard" && <DashboardOverview profile={profile} history={history} recommendations={recommendations} request={requestWithSession} signedIn={Boolean(accessToken)} onNavigate={navigate} />}
       {profile && activeRoute === "profile" && <ProfileScreen profile={profile} onEdit={() => navigate("profile-setup")} />}
       {activeRoute === "settings" && <SettingsScreen
         profile={profile}

@@ -1,6 +1,6 @@
 import { LoadingView, WaitingState } from "../components/WaitingState";
 import { PageDataState } from "../components/PageDataState";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { NutritionInsights } from "../components/NutritionInsights";
 import { Activity, ArrowRight, BookOpen, CalendarDays, Coffee, Download, Dumbbell, Eye, HeartPulse, History, LogIn, MessageCircle, Scale, ShieldCheck, Soup, Sparkles, Target, UserRound, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import TwoFactorQr from "../TwoFactorQr";
@@ -19,7 +19,6 @@ import type { Guidance, HealthHistory, HealthProfile, PrivacySettings } from "..
 type DashboardRoute = "dashboard" | "progress" | "records" | "hale" | "nutrition" | "meal-plan" | "profile-setup" | "recipes";
 
 interface DashboardOverviewProps {
-  navigation: ReactNode;
   profile: HealthProfile;
   history: HealthHistory;
   recommendations: Guidance | null;
@@ -58,7 +57,7 @@ function DashboardProgressRing({ value, label }: { value: number; label: string 
   );
 }
 
-export function DashboardOverview({ profile, history, recommendations, request, signedIn, onNavigate, navigation }: DashboardOverviewProps) {
+export function DashboardOverview({ profile, history, recommendations, request, signedIn, onNavigate }: DashboardOverviewProps) {
   const [now] = useState(Date.now);
   const [nutrition, setNutrition] = useState<NutritionProgressResult | null>(null);
   const [plans, setPlans] = useState<MealPlan[]>([]);
@@ -117,14 +116,6 @@ export function DashboardOverview({ profile, history, recommendations, request, 
 
   return (
     <section className="panel dashboard-overview">
-      <div className="dashboard-heading">
-        <div className="dashboard-heading-copy">
-        <p className="eyebrow">Dashboard</p>
-        <h2>Today</h2>
-        <p>{today}</p>
-        </div>
-        {navigation}
-      </div>
       {signedIn && loadState !== "ready" ? (
         <div aria-busy={loadState === "loading"}>
           {loadState === "loading" ? (

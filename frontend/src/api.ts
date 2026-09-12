@@ -134,7 +134,7 @@ export async function getAuthConfig(): Promise<AuthConfig> {
 export interface AccountRegistration {
   userId: number;
   email: string;
-  verificationLink?: string;
+  localDelivery: boolean;
   message: string;
 }
 
@@ -145,6 +145,7 @@ export interface AccountTokens {
 }
 
 interface AuthenticatedSessionOptions {
+  getSessionVersion: () => number;
   getAccessToken: () => string | null;
   getRefreshToken: () => string | null;
   refresh: (refreshToken: string) => Promise<AccountTokens>;
@@ -158,11 +159,16 @@ export interface AuthenticatedSession {
 }
 
 export function createAuthenticatedSession(options: AuthenticatedSessionOptions): AuthenticatedSession {
-  let refreshInFlight: Promise<AccountTokens> | null = null;
+  let refreshInFlight: { version: number; promise: Promise<AccountTokens> } | null = null;
+
+  const checkSession = (version: number) => {
+    if (options.getSessionVersion() !== version) throw new ApiError(401, "This request belongs to a session that has ended.");
+  };
 
   const refresh = (): Promise<AccountTokens> => {
-    if (refreshInFlight) {
-      return refreshInFlight;
+    const version = options.getSessionVersion();
+    if (refreshInFlight?.version === version) {
+      return refreshInFlight.promise;
     }
 
     const refreshToken = options.getRefreshToken();
@@ -173,39 +179,47 @@ export function createAuthenticatedSession(options: AuthenticatedSessionOptions)
 
     const pending = options.refresh(refreshToken)
       .then((tokens) => {
+        checkSession(version);
         options.applyTokens(tokens);
         return tokens;
       })
       .catch((error: unknown) => {
-        options.clearSession();
+        if (options.getSessionVersion() === version) options.clearSession();
         throw error;
       })
       .finally(() => {
-        if (refreshInFlight === pending) {
+        if (refreshInFlight?.promise === pending) {
           refreshInFlight = null;
         }
       });
 
-    refreshInFlight = pending;
+    refreshInFlight = { version, promise: pending };
     return pending;
   };
 
   const request = async <T>(operation: (accessToken: string) => Promise<T>): Promise<T> => {
+    const version = options.getSessionVersion();
     const accessToken = options.getAccessToken();
     if (!accessToken) {
       throw new ApiError(401, "Sign in is required.");
     }
 
     try {
-      return await operation(accessToken);
+      const result = await operation(accessToken);
+      checkSession(version);
+      return result;
     } catch (error: unknown) {
       if (!(error instanceof ApiError) || error.status !== 401) {
         throw error;
       }
     }
 
+    checkSession(version);
     const tokens = await refresh();
-    return operation(tokens.accessToken);
+    checkSession(version);
+    const result = await operation(tokens.accessToken);
+    checkSession(version);
+    return result;
   };
 
   return { request, refresh };
@@ -273,7 +287,7 @@ export async function logoutAccount(token: string): Promise<void> {
   if (!response.ok && response.status !== 401) throw new ApiError(response.status, await readError(response));
 }
 
-export async function exchangeOAuthTicket(): Promise<AccountTokens> {
+export async function exchangeOAuthTicket(): Promise<AccountLoginResult> {
   const response = await fetch("/api/auth/oauth/exchange", {
     method: "POST",
     credentials: "include",
@@ -282,7 +296,7 @@ export async function exchangeOAuthTicket(): Promise<AccountTokens> {
   if (!response.ok) {
     throw new ApiError(response.status, await readError(response));
   }
-  return (await response.json()) as AccountTokens;
+  return (await response.json()) as AccountLoginResult;
 }
 
 async function accountRequest<T>(path: string, token: string, body?: unknown): Promise<T> {
@@ -324,7 +338,7 @@ export async function verifyTwoFactor(challengeToken: string, code: string): Pro
   return (await response.json()) as AccountTokens;
 }
 
-export async function requestPasswordReset(email: string): Promise<{ message: string; resetLink?: string }> {
+export async function requestPasswordReset(email: string): Promise<{ message: string; localDelivery: boolean }> {
   const response = await fetch("/api/auth/password-reset/request", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -333,7 +347,7 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
   if (!response.ok) {
     throw new ApiError(response.status, await readError(response));
   }
-  return (await response.json()) as { message: string; resetLink?: string };
+  return (await response.json()) as { message: string; localDelivery: boolean };
 }
 
 export async function confirmPasswordReset(token: string, password: string): Promise<{ message: string }> {
