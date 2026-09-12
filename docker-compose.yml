@@ -30,7 +30,7 @@ services:
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://127.0.0.1:29450}
       DEEPSEEK_API_KEY_FILE: ${DEEPSEEK_API_KEY_FILE:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
-      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-flash}
       DEEPSEEK_TIMEOUT_MS: ${DEEPSEEK_TIMEOUT_MS:-55000}
       AUTH_JWT_SECRET_FILE: /app/data/jwt-secret
       RESEND_API_KEY_FILE: /app/data/resend.key
